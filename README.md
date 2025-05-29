@@ -1,72 +1,44 @@
 # Artist Onboarding System
 
-A professional artist onboarding platform built with Next.js, React, and Supabase.
+Professional artist onboarding platform with comprehensive 4-section onboarding process, admin dashboard, and Supabase integration.
 
 ## Features
 
-- **4-Section Onboarding Flow**: Complete artist profile setup
-- **Database Integration**: Real-time data with Supabase
-- **Admin Dashboard**: Manage artists and applications
-- **Beautiful UI**: Modern design with Tailwind CSS and shadcn/ui
-- **TypeScript**: Full type safety and development experience
+- ✅ **4-Section Onboarding Process**: Artist profile, artwork catalog, product configuration, and pricing
+- ✅ **Professional Admin Dashboard**: Clean, modern interface with real-time data
+- ✅ **Database Integration**: Supabase backend with secure authentication
+- ✅ **Responsive Design**: Works on all devices with modern styling
+- ✅ **Real-time Updates**: Live data synchronization
 
-## Technology Stack
+## Tech Stack
 
-- **Framework**: Next.js 15.3.2
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 3.4.17
-- **UI Components**: shadcn/ui
-- **Database**: Supabase
-- **Deployment**: Vercel
+- **Frontend:** Next.js 15, React 19, TypeScript
+- **Styling:** Tailwind CSS, shadcn/ui
+- **Database:** Supabase (PostgreSQL)
+- **Deployment:** Vercel
 
-## Getting Started
+## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
-
-## Project Structure
-
-```
-src/
-├── app/                 # Next.js App Router
-│   ├── api/            # API routes
-│   ├── admin/          # Admin dashboard
-│   ├── onboarding/     # Onboarding system
-│   ├── globals.css     # Global styles
-│   ├── layout.tsx      # Root layout
-│   └── page.tsx        # Homepage
-├── components/
-│   ├── ui/             # shadcn/ui components
-│   └── onboarding/     # Onboarding sections
-└── lib/
-    ├── utils.ts        # Utility functions
-    └── supabase/       # Database configuration
 ```
 
 ## Environment Variables
 
-Create a `.env.local` file with:
-
-```env
+```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-## Deployment
+## Live Demo
 
-This project is configured for deployment on Vercel with automatic GitHub integration.
+Visit the live application at: [artist-onboarding-app.vercel.app](https://artist-onboarding-app.vercel.app/)
 
-## License
+## Admin Dashboard
 
-Private - All rights reserved
+Access the admin dashboard at: [artist-onboarding-app.vercel.app/admin](https://artist-onboarding-app.vercel.app/admin)
+
+---
+
+**Note**: CSS and styling fixes have been applied for production deployment.
