@@ -72,11 +72,18 @@ interface ArtistIntakeData {
   framingOptions: { colors: string; materials: string; matting: string; glazing: string; mounting: string; depth: string }
   printMedia: string[]
 
-  // Placeholder sections 4-8
+  // Section 4: Pricing & Markup
   pricingModel: string
   markupPercentage: string
+  specificPrices: { small: string; medium: string; large: string; framed: string; canvas: string; merchandise: string }
   limitedEditions: boolean
+  limitedEditionDetails: string
+  signedPrints: boolean
+  signedPrintPremium: string
   wholesalePricing: boolean
+  wholesaleDiscount: string
+
+  // Placeholder sections 5-8
   shippingModel: string
   locationsServed: string[]
   standardTurnaround: string
@@ -162,8 +169,13 @@ export default function ArtistIntakePage() {
     printMedia: [],
     pricingModel: '',
     markupPercentage: '',
+    specificPrices: { small: '', medium: '', large: '', framed: '', canvas: '', merchandise: '' },
     limitedEditions: false,
+    limitedEditionDetails: '',
+    signedPrints: false,
+    signedPrintPremium: '',
     wholesalePricing: false,
+    wholesaleDiscount: '',
     shippingModel: '',
     locationsServed: [],
     standardTurnaround: '',
@@ -1090,6 +1102,266 @@ export default function ArtistIntakePage() {
     </div>
   )
 
+  const renderSection4 = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Pricing Model</CardTitle>
+          <CardDescription>
+            How should we handle product pricing?
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Pricing approach:</Label>
+            <div className="space-y-2 mt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="specific-prices"
+                  checked={formData.pricingModel === 'specific'}
+                  onCheckedChange={(checked) => updateFormData('pricingModel', checked ? 'specific' : '')}
+                />
+                <Label htmlFor="specific-prices">I will provide specific prices for each product type</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="markup-percentage"
+                  checked={formData.pricingModel === 'markup'}
+                  onCheckedChange={(checked) => updateFormData('pricingModel', checked ? 'markup' : '')}
+                />
+                <Label htmlFor="markup-percentage">Use a markup percentage based on base cost</Label>
+              </div>
+            </div>
+          </div>
+
+          {formData.pricingModel === 'markup' && (
+            <div>
+              <Label htmlFor="markupPercentage">Markup Percentage</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="markupPercentage"
+                  type="number"
+                  value={formData.markupPercentage}
+                  onChange={(e) => updateFormData('markupPercentage', e.target.value)}
+                  placeholder="150"
+                  className="max-w-24"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                e.g., 150% markup means if base cost is $10, selling price will be $25
+              </p>
+            </div>
+          )}
+
+          {formData.pricingModel === 'specific' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> Set specific prices for each product type. These will be used as starting prices for all artworks.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priceSmall">Small Print Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">$</span>
+                    <Input
+                      id="priceSmall"
+                      type="number"
+                      value={formData.specificPrices.small}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'small', e.target.value)}
+                      placeholder="45.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="priceMedium">Medium Print Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">$</span>
+                    <Input
+                      id="priceMedium"
+                      type="number"
+                      value={formData.specificPrices.medium}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'medium', e.target.value)}
+                      placeholder="65.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priceLarge">Large Print Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">$</span>
+                    <Input
+                      id="priceLarge"
+                      type="number"
+                      value={formData.specificPrices.large}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'large', e.target.value)}
+                      placeholder="85.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="priceFramed">Framed Print Premium</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">+$</span>
+                    <Input
+                      id="priceFramed"
+                      type="number"
+                      value={formData.specificPrices.framed}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'framed', e.target.value)}
+                      placeholder="40.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priceCanvas">Canvas Wrap Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">$</span>
+                    <Input
+                      id="priceCanvas"
+                      type="number"
+                      value={formData.specificPrices.canvas}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'canvas', e.target.value)}
+                      placeholder="95.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="priceMerchandise">Merchandise Base Price</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">$</span>
+                    <Input
+                      id="priceMerchandise"
+                      type="number"
+                      value={formData.specificPrices.merchandise}
+                      onChange={(e) => updateNestedFormData('specificPrices', 'merchandise', e.target.value)}
+                      placeholder="25.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Limited Editions & Special Offerings</CardTitle>
+          <CardDescription>Configure special product offerings and pricing</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="limitedEditions"
+              checked={formData.limitedEditions}
+              onCheckedChange={(checked) => updateFormData('limitedEditions', checked)}
+            />
+            <Label htmlFor="limitedEditions">
+              Offer limited edition prints
+            </Label>
+          </div>
+
+          {formData.limitedEditions && (
+            <div>
+              <Label htmlFor="limitedEditionDetails">Limited Edition Details</Label>
+              <Textarea
+                id="limitedEditionDetails"
+                value={formData.limitedEditionDetails}
+                onChange={(e) => updateFormData('limitedEditionDetails', e.target.value)}
+                placeholder="e.g., Limited to 50 prints per artwork, numbered and certified"
+                rows={2}
+              />
+            </div>
+          )}
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="signedPrints"
+              checked={formData.signedPrints}
+              onCheckedChange={(checked) => updateFormData('signedPrints', checked)}
+            />
+            <Label htmlFor="signedPrints">
+              Offer signed prints with premium pricing
+            </Label>
+          </div>
+
+          {formData.signedPrints && (
+            <div>
+              <Label htmlFor="signedPrintPremium">Signed Print Premium</Label>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">+$</span>
+                <Input
+                  id="signedPrintPremium"
+                  type="number"
+                  value={formData.signedPrintPremium}
+                  onChange={(e) => updateFormData('signedPrintPremium', e.target.value)}
+                  placeholder="25.00"
+                  step="0.01"
+                  className="max-w-32"
+                />
+                <span className="text-sm text-muted-foreground">additional per signed print</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Wholesale Pricing</CardTitle>
+          <CardDescription>Configure wholesale pricing for bulk orders or retail partners</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="wholesalePricing"
+              checked={formData.wholesalePricing}
+              onCheckedChange={(checked) => updateFormData('wholesalePricing', checked)}
+            />
+            <Label htmlFor="wholesalePricing">
+              Offer wholesale pricing
+            </Label>
+          </div>
+
+          {formData.wholesalePricing && (
+            <div>
+              <Label htmlFor="wholesaleDiscount">Wholesale Discount</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="wholesaleDiscount"
+                  type="number"
+                  value={formData.wholesaleDiscount}
+                  onChange={(e) => updateFormData('wholesaleDiscount', e.target.value)}
+                  placeholder="30"
+                  className="max-w-24"
+                />
+                <span className="text-sm text-muted-foreground">% off retail price</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Wholesale pricing will be automatically calculated and displayed to qualifying customers
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -1163,7 +1435,8 @@ export default function ArtistIntakePage() {
           {currentSection === 1 && renderSection1()}
           {currentSection === 2 && renderSection2()}
           {currentSection === 3 && renderSection3()}
-          {[4, 5, 6, 7, 8].includes(currentSection) && (
+          {currentSection === 4 && renderSection4()}
+          {[5, 6, 7, 8].includes(currentSection) && (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">
@@ -1216,6 +1489,7 @@ export default function ArtistIntakePage() {
                 <p><strong>Artwork Count:</strong> {formData.artworkCatalog.length}</p>
                 <p><strong>Product Types:</strong> {formData.productTypes.join(', ') || 'None selected'}</p>
                 <p><strong>Print Media:</strong> {formData.printMedia.join(', ') || 'None selected'}</p>
+                <p><strong>Pricing Model:</strong> {formData.pricingModel || 'Not selected'}</p>
                 <p><strong>Form ID:</strong> {formData.id || 'Not assigned yet'}</p>
               </div>
             </CardContent>
