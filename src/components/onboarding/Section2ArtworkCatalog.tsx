@@ -15,6 +15,16 @@ interface Section2Props {
   artistInitials?: string
 }
 
+// Add proper TypeScript interface for form data
+interface FormData {
+  artworkCount: string
+  categories: string[]
+  fileFormat: string
+  resolution: string
+  catalogMethod: string
+  artworkInfo: string
+}
+
 export default function Section2ArtworkCatalog({
   onSectionComplete,
   onSaveProgress,
@@ -23,7 +33,7 @@ export default function Section2ArtworkCatalog({
   updateSectionData,
   artistInitials
 }: Section2Props) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     artworkCount: "",
     categories: [],
     fileFormat: "",
@@ -37,7 +47,7 @@ export default function Section2ArtworkCatalog({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }))
+      setFormData((prev: FormData) => ({ ...prev, ...initialData }))
     }
   }, [initialData])
 
@@ -69,7 +79,7 @@ export default function Section2ArtworkCatalog({
   ]
 
   const toggleCategory = (category: string) => {
-    setFormData(prev => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       categories: prev.categories.includes(category)
         ? prev.categories.filter(c => c !== category)
@@ -113,7 +123,7 @@ export default function Section2ArtworkCatalog({
             <label className="text-sm font-medium">Approximate number of artworks you want to sell *</label>
             <select
               value={formData.artworkCount}
-              onChange={(e) => setFormData(prev => ({ ...prev, artworkCount: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, artworkCount: e.target.value }))}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
             >
               <option value="">Select artwork count</option>
@@ -171,7 +181,7 @@ export default function Section2ArtworkCatalog({
             <label className="text-sm font-medium">Primary file format</label>
             <select
               value={formData.fileFormat}
-              onChange={(e) => setFormData(prev => ({ ...prev, fileFormat: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, fileFormat: e.target.value }))}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
             >
               <option value="">Select file format</option>
@@ -187,7 +197,7 @@ export default function Section2ArtworkCatalog({
             <label className="text-sm font-medium">Image resolution/quality</label>
             <select
               value={formData.resolution}
-              onChange={(e) => setFormData(prev => ({ ...prev, resolution: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, resolution: e.target.value }))}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
             >
               <option value="">Select resolution quality</option>
@@ -221,7 +231,7 @@ export default function Section2ArtworkCatalog({
                   name="catalogMethod"
                   value="upload-now"
                   checked={formData.catalogMethod === "upload-now"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, catalogMethod: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, catalogMethod: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -238,7 +248,7 @@ export default function Section2ArtworkCatalog({
                   name="catalogMethod"
                   value="upload-later"
                   checked={formData.catalogMethod === "upload-later"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, catalogMethod: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, catalogMethod: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -255,7 +265,7 @@ export default function Section2ArtworkCatalog({
                   name="catalogMethod"
                   value="assistance"
                   checked={formData.catalogMethod === "assistance"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, catalogMethod: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, catalogMethod: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -272,7 +282,7 @@ export default function Section2ArtworkCatalog({
             <label className="text-sm font-medium">Additional artwork information</label>
             <textarea
               value={formData.artworkInfo}
-              onChange={(e) => setFormData(prev => ({ ...prev, artworkInfo: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, artworkInfo: e.target.value }))}
               placeholder="Any additional details about your artwork collection, specific requirements, or questions about file management..."
               rows={4}
               className="w-full px-3 py-2 border border-border rounded-md bg-background resize-none"
