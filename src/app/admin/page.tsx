@@ -88,9 +88,9 @@ export default function AdminDashboard() {
           email: intakeData.email || intake.email || 'email@example.com',
           phone: intakeData.phone || '',
           status: intake.status || 'draft',
-          completedSections: [1, ...(intakeData.artworkCatalog?.length > 0 ? [2] : [])], // Mark section 2 complete if artwork exists
+          completedSections: calculateCompletedSections(intakeData),
           artworkCount: intakeData.artworkCatalog?.length || 0,
-          variantCount: 0, // Will calculate from other sections later
+          variantCount: intakeData.productTypes?.length || 0,
           lastUpdated: intake.updated_at || intake.created_at || new Date().toISOString(),
           submissionDate: intake.submitted_at || intake.created_at || new Date().toISOString(),
           completionPercentage: calculateCompletion(intakeData),
@@ -108,18 +108,29 @@ export default function AdminDashboard() {
     }
   }
 
-  const calculateCompletion = (intakeData: any) => {
-    let completedSections = 0
+  const calculateCompletedSections = (intakeData: any) => {
+    const sections = []
     
     // Section 1: Basic info
-    if (intakeData.fullName && intakeData.email) completedSections++
+    if (intakeData.fullName && intakeData.email) sections.push(1)
     
     // Section 2: Artwork catalog
-    if (intakeData.artworkCatalog?.length > 0) completedSections++
+    if (intakeData.artworkCatalog?.length > 0) sections.push(2)
+    
+    // Section 3: Product types
+    if (intakeData.productTypes?.length > 0) sections.push(3)
+    
+    // Section 4: Pricing
+    if (intakeData.pricingModel) sections.push(4)
     
     // Add checks for other sections as they're built
     
-    return (completedSections / 8) * 100
+    return sections
+  }
+
+  const calculateCompletion = (intakeData: any) => {
+    const completedSections = calculateCompletedSections(intakeData)
+    return (completedSections.length / 8) * 100
   }
 
   // Fetch artists on component mount
@@ -292,15 +303,15 @@ export default function AdminDashboard() {
                 <div className="text-sm text-muted-foreground">Section 2: Artwork</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-400">{completionStats.section3}</div>
+                <div className="text-2xl font-bold text-orange-600">{completionStats.section3}</div>
                 <div className="text-sm text-muted-foreground">Section 3: Products</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-400">{completionStats.section4}</div>
+                <div className="text-2xl font-bold text-purple-600">{completionStats.section4}</div>
                 <div className="text-sm text-muted-foreground">Section 4: Pricing</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{completionStats.complete}</div>
+                <div className="text-2xl font-bold text-gray-400">{completionStats.complete}</div>
                 <div className="text-sm text-muted-foreground">Complete (8/8)</div>
               </div>
             </div>
@@ -377,6 +388,9 @@ export default function AdminDashboard() {
                         <span className="font-medium text-green-600">
                           🎨 {artist.artworkCount} artworks
                         </span>
+                        <span className="font-medium text-blue-600">
+                          📦 {artist.variantCount} products
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -447,6 +461,7 @@ export default function AdminDashboard() {
                       <p><strong>Completed Sections:</strong> {selectedArtist.completedSections?.length || 0}/8</p>
                       <p><strong>Completion:</strong> {Math.round(selectedArtist.completionPercentage || 0)}%</p>
                       <p><strong>Artwork Count:</strong> 🎨 {selectedArtist.artworkCount} pieces</p>
+                      <p><strong>Product Types:</strong> 📦 {selectedArtist.variantCount} variants</p>
                     </div>
                   </div>
                 </div>
@@ -476,6 +491,61 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 3: Product Types */}
+                {selectedArtist.rawData?.intake_data?.productTypes?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Section 3: Product Types & Variants</h4>
+                    <div className="space-y-2">
+                      <p><strong>Product Types:</strong> {selectedArtist.rawData.intake_data.productTypes.join(', ')}</p>
+                      <p><strong>Print Sizes:</strong> 
+                        {selectedArtist.rawData.intake_data.printSizes?.small && ` Small: ${selectedArtist.rawData.intake_data.printSizes.small}`}
+                        {selectedArtist.rawData.intake_data.printSizes?.medium && ` • Medium: ${selectedArtist.rawData.intake_data.printSizes.medium}`}
+                        {selectedArtist.rawData.intake_data.printSizes?.large && ` • Large: ${selectedArtist.rawData.intake_data.printSizes.large}`}
+                      </p>
+                      <p><strong>Print Media:</strong> {selectedArtist.rawData.intake_data.printMedia?.join(', ') || 'Not specified'}</p>
+                      <p><strong>Unit System:</strong> {selectedArtist.rawData.intake_data.unitSystem || 'Not specified'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 4: Pricing */}
+                {selectedArtist.rawData?.intake_data?.pricingModel && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Section 4: Pricing & Markup</h4>
+                    <div className="space-y-2">
+                      <p><strong>Pricing Model:</strong> {selectedArtist.rawData.intake_data.pricingModel === 'markup' ? 'Markup Percentage' : 'Specific Prices'}</p>
+                      {selectedArtist.rawData.intake_data.pricingModel === 'markup' && (
+                        <p><strong>Markup Percentage:</strong> {selectedArtist.rawData.intake_data.markupPercentage}%</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.pricingModel === 'specific' && (
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {selectedArtist.rawData.intake_data.specificPrices?.small && (
+                            <p><strong>Small Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.small}</p>
+                          )}
+                          {selectedArtist.rawData.intake_data.specificPrices?.medium && (
+                            <p><strong>Medium Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.medium}</p>
+                          )}
+                          {selectedArtist.rawData.intake_data.specificPrices?.large && (
+                            <p><strong>Large Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.large}</p>
+                          )}
+                          {selectedArtist.rawData.intake_data.specificPrices?.framed && (
+                            <p><strong>Framed Premium:</strong> +${selectedArtist.rawData.intake_data.specificPrices.framed}</p>
+                          )}
+                        </div>
+                      )}
+                      {selectedArtist.rawData.intake_data.limitedEditions && (
+                        <p><strong>Limited Editions:</strong> ✅ Yes</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.signedPrints && (
+                        <p><strong>Signed Prints:</strong> ✅ Yes (+${selectedArtist.rawData.intake_data.signedPrintPremium || '0'})</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.wholesalePricing && (
+                        <p><strong>Wholesale Pricing:</strong> ✅ Yes ({selectedArtist.rawData.intake_data.wholesaleDiscount}% discount)</p>
+                      )}
                     </div>
                   </div>
                 )}
