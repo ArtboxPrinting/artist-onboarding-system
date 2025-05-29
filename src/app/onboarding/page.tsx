@@ -1,27 +1,30 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, User } from "lucide-react"
-
-// Import the section components
-import Section1ArtistProfile from "@/components/onboarding/Section1ArtistProfile"
-import Section2ArtworkCatalog from "@/components/onboarding/Section2ArtworkCatalog"
-import Section3ProductConfig from "@/components/onboarding/Section3ProductConfig"
-import Section4Pricing from "@/components/onboarding/Section4Pricing"
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, User, AlertCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface ArtistData {
   id?: string
   firstName: string
   lastName: string
   email: string
-  section1Data?: any
-  section2Data?: any
-  section3Data?: any
-  section4Data?: any
+  phone?: string
+  location?: string
+  bio?: string
+  artistStatement?: string
+  website?: string
+  instagram?: string
+  facebook?: string
+  brandColors?: string
+  artStyle?: string[]
+  experience?: string
   currentSection: number
   status: 'draft' | 'in-progress' | 'completed'
   completedSections: number[]
@@ -33,12 +36,24 @@ export default function OnboardingPage() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
+    location: '',
+    bio: '',
+    artistStatement: '',
+    website: '',
+    instagram: '',
+    facebook: '',
+    brandColors: '',
+    artStyle: [],
+    experience: '',
     currentSection: 1,
     status: 'draft',
     completedSections: []
   })
   const [isLoading, setIsLoading] = useState(false)
   const [artistId, setArtistId] = useState<string>()
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isValid, setIsValid] = useState(false)
 
   // Generate artist initials
   const getArtistInitials = () => {
@@ -48,209 +63,118 @@ export default function OnboardingPage() {
     return ""
   }
 
+  // Validation function
+  const validateForm = useCallback(() => {
+    const newErrors: Record<string, string> = {}
+
+    if (!artistData.firstName?.trim()) {
+      newErrors.firstName = "First name is required"
+    }
+
+    if (!artistData.lastName?.trim()) {
+      newErrors.lastName = "Last name is required"
+    }
+
+    if (!artistData.email?.trim()) {
+      newErrors.email = "Email is required"
+    } else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(artistData.email)) {
+      newErrors.email = "Please enter a valid email address"
+    }
+
+    if (!artistData.bio?.trim()) {
+      newErrors.bio = "Artist bio is required"
+    } else if (artistData.bio.length < 50) {
+      newErrors.bio = "Bio should be at least 50 characters"
+    }
+
+    if (!artistData.artistStatement?.trim()) {
+      newErrors.artistStatement = "Artist statement is required"
+    } else if (artistData.artistStatement.length < 100) {
+      newErrors.artistStatement = "Artist statement should be at least 100 characters"
+    }
+
+    setErrors(newErrors)
+    setIsValid(Object.keys(newErrors).length === 0)
+  }, [artistData])
+
+  // Update form data
+  const handleInputChange = (field: string, value: string | string[]) => {
+    setArtistData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  // Toggle art style
+  const handleStyleToggle = (style: string) => {
+    const currentStyles = artistData.artStyle || []
+    const newStyles = currentStyles.includes(style)
+      ? currentStyles.filter(s => s !== style)
+      : [...currentStyles, style]
+    
+    handleInputChange('artStyle', newStyles)
+  }
+
   // Save progress to API
   const saveProgress = async () => {
     if (!artistId) return
 
     setIsLoading(true)
     try {
-      const response = await fetch('/api/onboarding', {
+      const response = await fetch('/api/artists', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          artistId,
-          sectionNumber: currentSection,
-          formData: getCurrentSectionData(),
-          status: artistData.status
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save progress')
-      }
-
-      console.log('Progress saved successfully')
-    } catch (error) {
-      console.error('Error saving progress:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Get current section data
-  const getCurrentSectionData = () => {
-    switch (currentSection) {
-      case 1: return artistData.section1Data
-      case 2: return artistData.section2Data
-      case 3: return artistData.section3Data
-      case 4: return artistData.section4Data
-      default: return {}
-    }
-  }
-
-  // Update section data - FIXED: Now properly handles section data updates
-  const updateSectionData = (sectionNum: number, data: any) => {
-    console.log('Updating section data:', sectionNum, data)
-    setArtistData(prev => ({
-      ...prev,
-      [`section${sectionNum}Data`]: data,
-      // Update basic info from section 1
-      ...(sectionNum === 1 && {
-        firstName: data.firstName || prev.firstName,
-        lastName: data.lastName || prev.lastName,
-        email: data.email || prev.email
-      })
-    }))
-  }
-
-  // Handle section completion
-  const handleSectionComplete = async (sectionId: number) => {
-    console.log('Completing section:', sectionId)
-    
-    const updatedCompletedSections = [...artistData.completedSections]
-    if (!updatedCompletedSections.includes(sectionId)) {
-      updatedCompletedSections.push(sectionId)
-    }
-
-    setArtistData(prev => ({
-      ...prev,
-      completedSections: updatedCompletedSections,
-      currentSection: Math.min(sectionId + 1, 4),
-      status: sectionId === 4 ? 'completed' : 'in-progress'
-    }))
-
-    // Save progress after completion
-    await saveProgress()
-
-    // Move to next section if not the last one
-    if (sectionId < 4) {
-      setCurrentSection(sectionId + 1)
-    } else {
-      // Complete onboarding
-      await completeOnboarding()
-    }
-  }
-
-  // Complete the entire onboarding process
-  const completeOnboarding = async () => {
-    if (!artistId) return
-
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          artistId,
-          sectionData: {
-            section1: artistData.section1Data,
-            section2: artistData.section2Data,
-            section3: artistData.section3Data,
-            section4: artistData.section4Data
-          }
+          full_name: `${artistData.firstName} ${artistData.lastName}`.trim(),
+          email: artistData.email,
+          status: 'draft'
         }),
       })
 
       if (response.ok) {
-        alert('🎉 Onboarding completed successfully! Welcome to the artist platform!')
-        // Redirect to dashboard or success page
+        console.log('Artist saved successfully')
+        // Redirect to admin dashboard to show success
+        alert('🎉 Artist profile created successfully!')
         window.location.href = '/admin'
       } else {
-        throw new Error('Failed to complete onboarding')
+        throw new Error('Failed to save artist')
       }
     } catch (error) {
-      console.error('Error completing onboarding:', error)
-      alert('There was an error completing your onboarding. Please try again.')
+      console.error('Error saving artist:', error)
+      alert('Error saving artist. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Initialize new artist on component mount
-  useEffect(() => {
-    const initializeArtist = async () => {
-      // Generate a unique artist ID
-      const newArtistId = `artist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      setArtistId(newArtistId)
+  // Handle section completion
+  const handleSectionComplete = async () => {
+    if (isValid) {
+      await saveProgress()
     }
+  }
 
-    initializeArtist()
+  // Initialize artist ID
+  useEffect(() => {
+    const newArtistId = `artist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    setArtistId(newArtistId)
   }, [])
 
-  // Navigation functions
-  const goToSection = (sectionNum: number) => {
-    setCurrentSection(sectionNum)
-  }
-
-  const goToPreviousSection = () => {
-    if (currentSection > 1) {
-      setCurrentSection(currentSection - 1)
-    }
-  }
+  // Validate form when data changes
+  useEffect(() => {
+    validateForm()
+  }, [validateForm])
 
   // Calculate progress percentage
-  const progressPercentage = (artistData.completedSections.length / 4) * 100
+  const progressPercentage = isValid ? 100 : 0
 
-  // Section titles
-  const sectionTitles = [
-    "Artist Profile & Brand Setup",
-    "Artwork Catalog & File Management", 
-    "Product Configuration & Variants",
-    "Pricing Strategy & Setup"
+  const artStyles = [
+    "Abstract", "Realism", "Impressionism", "Modern", "Contemporary",
+    "Digital Art", "Photography", "Mixed Media", "Watercolor", "Oil Painting",
+    "Acrylic", "Sculpture", "Street Art", "Pop Art", "Minimalism"
   ]
-
-  const renderCurrentSection = () => {
-    const commonProps = {
-      artistId,
-      artistInitials: getArtistInitials(),
-      onSaveProgress: saveProgress
-    }
-
-    switch (currentSection) {
-      case 1:
-        return (
-          <Section1ArtistProfile
-            {...commonProps}
-            onSectionComplete={handleSectionComplete}
-            initialData={artistData.section1Data}
-            updateSectionData={(data) => updateSectionData(1, data)}
-          />
-        )
-      case 2:
-        return (
-          <Section2ArtworkCatalog
-            {...commonProps}
-            onSectionComplete={handleSectionComplete}
-            initialData={artistData.section2Data}
-            updateSectionData={(data) => updateSectionData(2, data)}
-          />
-        )
-      case 3:
-        return (
-          <Section3ProductConfig
-            {...commonProps}
-            onSectionComplete={handleSectionComplete}
-            initialData={artistData.section3Data}
-            updateSectionData={(data) => updateSectionData(3, data)}
-          />
-        )
-      case 4:
-        return (
-          <Section4Pricing
-            {...commonProps}
-            onSectionComplete={handleSectionComplete}
-            initialData={artistData.section4Data}
-            updateSectionData={(data) => updateSectionData(4, data)}
-          />
-        )
-      default:
-        return null
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,7 +182,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Artist Onboarding System
+            🎨 Artist Onboarding System
           </h1>
           <p className="text-lg text-muted-foreground mb-4">
             Complete your artist profile to join our platform
@@ -268,116 +192,335 @@ export default function OnboardingPage() {
           <div className="max-w-md mx-auto">
             <div className="flex justify-between text-sm text-muted-foreground mb-2">
               <span>Progress</span>
-              <span>{artistData.completedSections.length} of 4 sections complete</span>
+              <span>{isValid ? 'Complete' : 'In Progress'}</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
           </div>
         </div>
 
-        {/* Section Navigation */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg">Onboarding Sections</CardTitle>
-            <CardDescription>
-              Complete all sections to activate your artist profile
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {sectionTitles.map((title, index) => {
-                const sectionNum = index + 1
-                const isCompleted = artistData.completedSections.includes(sectionNum)
-                const isCurrent = currentSection === sectionNum
-                
-                return (
-                  <button
-                    key={sectionNum}
-                    onClick={() => goToSection(sectionNum)}
-                    className={`p-3 rounded-lg border text-left transition-colors ${
-                      isCurrent 
-                        ? "border-primary bg-primary/5" 
-                        : isCompleted
-                        ? "border-green-500 bg-green-50 hover:bg-green-100"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        isCompleted 
-                          ? "bg-green-500 text-white" 
-                          : isCurrent
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {isCompleted ? <CheckCircle className="w-4 h-4" /> : sectionNum}
-                      </div>
-                      <Badge variant={isCurrent ? "default" : isCompleted ? "secondary" : "outline"} className="text-xs">
-                        {isCompleted ? "Complete" : isCurrent ? "Current" : "Pending"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm font-medium">{title}</p>
-                  </button>
-                )
-              })}
+        {/* Main Form */}
+        <div className="space-y-8">
+          {/* Progress Indicator */}
+          <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
+              {getArtistInitials() || <User className="w-5 h-5" />}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Current Section Content */}
-        <div className="mb-8">
-          {renderCurrentSection()}
-        </div>
-
-        {/* Navigation Footer */}
-        <div className="flex justify-between items-center p-4 border-t bg-muted/30 rounded-lg">
-          <Button
-            variant="outline"
-            onClick={goToPreviousSection}
-            disabled={currentSection === 1}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Previous Section
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {isLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4 animate-spin" />
-                Saving...
-              </div>
+            <div>
+              <h3 className="font-semibold">Artist Profile & Brand Setup</h3>
+              <p className="text-sm text-muted-foreground">
+                Tell us about yourself and your artistic identity
+              </p>
+            </div>
+            {isValid && (
+              <Badge className="ml-auto bg-green-600">
+                ✓ Ready to Submit
+              </Badge>
             )}
-            <Badge variant="outline">
-              Section {currentSection} of 4
-            </Badge>
           </div>
 
-          <Button
-            onClick={() => currentSection < 4 ? setCurrentSection(currentSection + 1) : completeOnboarding()}
-            disabled={currentSection === 4 && artistData.completedSections.length < 4}
-            className="flex items-center gap-2"
-          >
-            {currentSection === 4 ? "Complete Onboarding" : "Next Section"}
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Test Artist Info Display */}
-        {(artistData.firstName || artistData.lastName || artistData.email) && (
-          <Card className="mt-6 border-green-200 bg-green-50">
+          {/* Personal Information */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-sm text-green-800">Test Artist Information</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>
+                Basic contact information and location details
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <p><strong>Name:</strong> {artistData.firstName} {artistData.lastName}</p>
-                <p><strong>Email:</strong> {artistData.email}</p>
-                <p><strong>Artist ID:</strong> {artistId}</p>
-                <p><strong>Progress:</strong> {artistData.completedSections.length}/4 sections completed</p>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={artistData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                    placeholder="Enter your first name"
+                    className={errors.firstName ? "border-red-500" : ""}
+                  />
+                  {errors.firstName && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.firstName}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={artistData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    placeholder="Enter your last name"
+                    className={errors.lastName ? "border-red-500" : ""}
+                  />
+                  {errors.lastName && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.lastName}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={artistData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="artist@example.com"
+                    className={errors.email ? "border-red-500" : ""}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    value={artistData.phone || ''}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={artistData.location || ''}
+                  onChange={(e) => handleInputChange("location", e.target.value)}
+                  placeholder="City, State/Province, Country"
+                />
               </div>
             </CardContent>
           </Card>
-        )}
+
+          {/* Artist Identity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Artist Identity</CardTitle>
+              <CardDescription>
+                Share your artistic background and creative identity
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="bio">Artist Bio *</Label>
+                <Textarea
+                  id="bio"
+                  value={artistData.bio || ''}
+                  onChange={(e) => handleInputChange("bio", e.target.value)}
+                  placeholder="Tell us about yourself as an artist. What inspires you? What's your background? (Min 50 characters)"
+                  rows={4}
+                  className={errors.bio ? "border-red-500" : ""}
+                />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{(artistData.bio || '').length} characters</span>
+                  {errors.bio && (
+                    <p className="text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="artistStatement">Artist Statement *</Label>
+                <Textarea
+                  id="artistStatement"
+                  value={artistData.artistStatement || ''}
+                  onChange={(e) => handleInputChange("artistStatement", e.target.value)}
+                  placeholder="Describe your artistic vision, themes, and what you hope to communicate through your work. (Min 100 characters)"
+                  rows={5}
+                  className={errors.artistStatement ? "border-red-500" : ""}
+                />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{(artistData.artistStatement || '').length} characters</span>
+                  {errors.artistStatement && (
+                    <p className="text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.artistStatement}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Art Styles & Mediums</Label>
+                <p className="text-sm text-muted-foreground">
+                  Select all styles and mediums that apply to your work
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {artStyles.map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => handleStyleToggle(style)}
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                        (artistData.artStyle || []).includes(style)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-muted border-border"
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+                {(artistData.artStyle || []).length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {(artistData.artStyle || []).join(", ")}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="experience">Experience Level</Label>
+                <select
+                  id="experience"
+                  value={artistData.experience || ''}
+                  onChange={(e) => handleInputChange("experience", e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                >
+                  <option value="">Select your experience level</option>
+                  <option value="beginner">Beginner (0-2 years)</option>
+                  <option value="intermediate">Intermediate (2-5 years)</option>
+                  <option value="advanced">Advanced (5-10 years)</option>
+                  <option value="professional">Professional (10+ years)</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Online Presence */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Online Presence</CardTitle>
+              <CardDescription>
+                Your existing online presence and social media links
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  value={artistData.website || ''}
+                  onChange={(e) => handleInputChange("website", e.target.value)}
+                  placeholder="https://yourartistwebsite.com"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    value={artistData.instagram || ''}
+                    onChange={(e) => handleInputChange("instagram", e.target.value)}
+                    placeholder="@yourusername"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="facebook">Facebook</Label>
+                  <Input
+                    id="facebook"
+                    value={artistData.facebook || ''}
+                    onChange={(e) => handleInputChange("facebook", e.target.value)}
+                    placeholder="facebook.com/yourpage"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Brand Preferences */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Preferences</CardTitle>
+              <CardDescription>
+                Visual identity preferences for your art store
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="brandColors">Preferred Brand Colors</Label>
+                <Input
+                  id="brandColors"
+                  value={artistData.brandColors || ''}
+                  onChange={(e) => handleInputChange("brandColors", e.target.value)}
+                  placeholder="e.g., Navy blue, gold, cream - colors that represent your artistic brand"
+                />
+                <p className="text-sm text-muted-foreground">
+                  These colors will be used in your personalized art store design
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center pt-6 border-t">
+            <div className="text-sm text-muted-foreground">
+              {isValid ? (
+                <span className="text-green-600 font-medium">✓ Ready to submit your artist profile</span>
+              ) : (
+                <span>Please complete all required fields</span>
+              )}
+            </div>
+            
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleSectionComplete}
+                disabled={!isValid || isLoading}
+                className={isValid ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                {isLoading ? (
+                  <>
+                    <Clock className="w-4 h-4 animate-spin mr-2" />
+                    Creating Profile...
+                  </>
+                ) : (
+                  <>
+                    ✓ Submit Artist Profile
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Test Artist Info Display */}
+          {(artistData.firstName || artistData.email) && (
+            <Card className="mt-6 border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-sm text-green-800">Current Artist Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm space-y-1">
+                  <p><strong>Name:</strong> {artistData.firstName} {artistData.lastName}</p>
+                  <p><strong>Email:</strong> {artistData.email}</p>
+                  <p><strong>Bio Length:</strong> {(artistData.bio || '').length} characters</p>
+                  <p><strong>Statement Length:</strong> {(artistData.artistStatement || '').length} characters</p>
+                  <p><strong>Art Styles:</strong> {(artistData.artStyle || []).join(', ') || 'None selected'}</p>
+                  <p><strong>Form Valid:</strong> {isValid ? '✅ Yes' : '❌ No'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   )
