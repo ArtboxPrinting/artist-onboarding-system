@@ -63,7 +63,13 @@ export default function OnboardingPage() {
     return ""
   }
 
-  // Validation function
+  // FIXED: Email validation function
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  // Validation function - FIXED EMAIL VALIDATION
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {}
 
@@ -77,7 +83,7 @@ export default function OnboardingPage() {
 
     if (!artistData.email?.trim()) {
       newErrors.email = "Email is required"
-    } else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(artistData.email)) {
+    } else if (!isValidEmail(artistData.email)) {
       newErrors.email = "Please enter a valid email address"
     }
 
@@ -95,10 +101,18 @@ export default function OnboardingPage() {
 
     setErrors(newErrors)
     setIsValid(Object.keys(newErrors).length === 0)
+    
+    console.log('Validation results:', {
+      errors: newErrors,
+      isValid: Object.keys(newErrors).length === 0,
+      email: artistData.email,
+      emailValid: isValidEmail(artistData.email)
+    })
   }, [artistData])
 
   // Update form data
   const handleInputChange = (field: string, value: string | string[]) => {
+    console.log('Input change:', field, value)
     setArtistData(prev => ({
       ...prev,
       [field]: value
@@ -121,6 +135,12 @@ export default function OnboardingPage() {
 
     setIsLoading(true)
     try {
+      console.log('Submitting artist data:', {
+        full_name: `${artistData.firstName} ${artistData.lastName}`.trim(),
+        email: artistData.email,
+        status: 'draft'
+      })
+
       const response = await fetch('/api/artists', {
         method: 'POST',
         headers: {
@@ -133,17 +153,20 @@ export default function OnboardingPage() {
         }),
       })
 
+      const result = await response.json()
+      console.log('API Response:', result)
+
       if (response.ok) {
         console.log('Artist saved successfully')
+        alert(`🎉 SUCCESS! Artist "${artistData.firstName} ${artistData.lastName}" has been added to the database!`)
         // Redirect to admin dashboard to show success
-        alert('🎉 Artist profile created successfully!')
         window.location.href = '/admin'
       } else {
-        throw new Error('Failed to save artist')
+        throw new Error(`Failed to save artist: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error saving artist:', error)
-      alert('Error saving artist. Please try again.')
+      alert(`Error saving artist: ${error}`)
     } finally {
       setIsLoading(false)
     }
@@ -151,8 +174,12 @@ export default function OnboardingPage() {
 
   // Handle section completion
   const handleSectionComplete = async () => {
+    console.log('Form submission attempted, isValid:', isValid)
     if (isValid) {
       await saveProgress()
+    } else {
+      console.log('Form invalid, errors:', errors)
+      alert('Please fix the form errors before submitting.')
     }
   }
 
@@ -168,7 +195,7 @@ export default function OnboardingPage() {
   }, [validateForm])
 
   // Calculate progress percentage
-  const progressPercentage = isValid ? 100 : 0
+  const progressPercentage = isValid ? 100 : 25
 
   const artStyles = [
     "Abstract", "Realism", "Impressionism", "Modern", "Contemporary",
@@ -182,7 +209,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            🎨 Artist Onboarding System
+            🎨 Artist Onboarding System - FIXED
           </h1>
           <p className="text-lg text-muted-foreground mb-4">
             Complete your artist profile to join our platform
@@ -192,11 +219,27 @@ export default function OnboardingPage() {
           <div className="max-w-md mx-auto">
             <div className="flex justify-between text-sm text-muted-foreground mb-2">
               <span>Progress</span>
-              <span>{isValid ? 'Complete' : 'In Progress'}</span>
+              <span>{isValid ? 'Ready to Submit!' : 'In Progress'}</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
           </div>
         </div>
+
+        {/* Validation Status Debug */}
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-sm text-blue-800">🔧 Form Validation Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm space-y-1">
+              <p><strong>Email Valid:</strong> {isValidEmail(artistData.email) ? '✅ Yes' : '❌ No'}</p>
+              <p><strong>Bio Length:</strong> {(artistData.bio || '').length}/50</p>
+              <p><strong>Statement Length:</strong> {(artistData.artistStatement || '').length}/100</p>
+              <p><strong>Form Valid:</strong> {isValid ? '✅ Ready to Submit' : '❌ Has Errors'}</p>
+              <p><strong>Errors:</strong> {Object.keys(errors).length > 0 ? Object.keys(errors).join(', ') : 'None'}</p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Form */}
         <div className="space-y-8">
@@ -476,9 +519,9 @@ export default function OnboardingPage() {
           <div className="flex justify-between items-center pt-6 border-t">
             <div className="text-sm text-muted-foreground">
               {isValid ? (
-                <span className="text-green-600 font-medium">✓ Ready to submit your artist profile</span>
+                <span className="text-green-600 font-medium">✅ Ready to submit your artist profile</span>
               ) : (
-                <span>Please complete all required fields</span>
+                <span>❌ Please complete all required fields</span>
               )}
             </div>
             
@@ -495,31 +538,12 @@ export default function OnboardingPage() {
                   </>
                 ) : (
                   <>
-                    ✓ Submit Artist Profile
+                    {isValid ? '🚀 Submit Artist Profile' : '❌ Fix Errors to Submit'}
                   </>
                 )}
               </Button>
             </div>
           </div>
-
-          {/* Test Artist Info Display */}
-          {(artistData.firstName || artistData.email) && (
-            <Card className="mt-6 border-green-200 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-sm text-green-800">Current Artist Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm space-y-1">
-                  <p><strong>Name:</strong> {artistData.firstName} {artistData.lastName}</p>
-                  <p><strong>Email:</strong> {artistData.email}</p>
-                  <p><strong>Bio Length:</strong> {(artistData.bio || '').length} characters</p>
-                  <p><strong>Statement Length:</strong> {(artistData.artistStatement || '').length} characters</p>
-                  <p><strong>Art Styles:</strong> {(artistData.artStyle || []).join(', ') || 'None selected'}</p>
-                  <p><strong>Form Valid:</strong> {isValid ? '✅ Yes' : '❌ No'}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
