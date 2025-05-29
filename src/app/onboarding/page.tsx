@@ -64,13 +64,15 @@ interface ArtistIntakeData {
   fileFormatGuidance: boolean
   uploadMethod: string
 
-  // Placeholder sections 3-8
+  // Section 3: Product Types & Variants
   productTypes: string[]
   printSizes: { small: string; medium: string; large: string; custom: string }
   unitSystem: string
   aspectRatios: string
   framingOptions: { colors: string; materials: string; matting: string; glazing: string; mounting: string; depth: string }
   printMedia: string[]
+
+  // Placeholder sections 4-8
   pricingModel: string
   markupPercentage: string
   limitedEditions: boolean
@@ -869,6 +871,225 @@ export default function ArtistIntakePage() {
     </div>
   )
 
+  const renderSection3 = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Product Types & Offerings</CardTitle>
+          <CardDescription>
+            What will you offer for each artwork?
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Select the product types you want to offer:</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+              {[
+                'Unframed prints',
+                'Framed prints', 
+                'Canvas wraps',
+                'Block mounts',
+                'Greeting cards / postcards',
+                'Merchandise (mugs, magnets, etc.)',
+                'Originals (manual fulfillment only)'
+              ].map((product) => (
+                <div key={product} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`product-${product}`}
+                    checked={formData.productTypes.includes(product)}
+                    onCheckedChange={() => toggleArrayField('productTypes', product)}
+                  />
+                  <Label htmlFor={`product-${product}`} className="text-sm">{product}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Print Sizes Offered</CardTitle>
+          <CardDescription>Define the print sizes you want to offer</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="unitSystem">Unit System</Label>
+            <Select
+              value={formData.unitSystem}
+              onValueChange={(value) => updateFormData('unitSystem', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select unit system" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inches">Inches</SelectItem>
+                <SelectItem value="cm">Centimeters</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="smallSize">Small Size</Label>
+              <Input
+                id="smallSize"
+                value={formData.printSizes.small}
+                onChange={(e) => updateNestedFormData('printSizes', 'small', e.target.value)}
+                placeholder="e.g., 8x10 or 20x25cm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="mediumSize">Medium Size</Label>
+              <Input
+                id="mediumSize"  
+                value={formData.printSizes.medium}
+                onChange={(e) => updateNestedFormData('printSizes', 'medium', e.target.value)}
+                placeholder="e.g., 11x14 or 28x35cm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="largeSize">Large Size</Label>
+              <Input
+                id="largeSize"
+                value={formData.printSizes.large}
+                onChange={(e) => updateNestedFormData('printSizes', 'large', e.target.value)}
+                placeholder="e.g., 16x20 or 40x50cm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="customSize">Custom Sizes</Label>
+              <Input
+                id="customSize"
+                value={formData.printSizes.custom}
+                onChange={(e) => updateNestedFormData('printSizes', 'custom', e.target.value)}
+                placeholder="e.g., Custom sizes available upon request"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="aspectRatios">Aspect ratios allowed</Label>
+            <Input
+              id="aspectRatios"
+              value={formData.aspectRatios}
+              onChange={(e) => updateFormData('aspectRatios', e.target.value)}
+              placeholder="e.g., 4:5, 3:4, 16:20, square crops"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Framing Options</CardTitle>
+          <CardDescription>Configure framing options (if offering framed prints)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="frameColors">Frame Colors</Label>
+              <Input
+                id="frameColors"
+                value={formData.framingOptions.colors}
+                onChange={(e) => updateNestedFormData('framingOptions', 'colors', e.target.value)}
+                placeholder="e.g., Black, White, Natural Wood, Gold"
+              />
+            </div>
+            <div>
+              <Label htmlFor="frameMaterials">Frame Materials</Label>
+              <Input
+                id="frameMaterials"
+                value={formData.framingOptions.materials}
+                onChange={(e) => updateNestedFormData('framingOptions', 'materials', e.target.value)}
+                placeholder="e.g., Wood, Metal, Plastic"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="matting">Matting Options</Label>
+              <Input
+                id="matting"
+                value={formData.framingOptions.matting}
+                onChange={(e) => updateNestedFormData('framingOptions', 'matting', e.target.value)}
+                placeholder="e.g., White, Cream, Black, No mat"
+              />
+            </div>
+            <div>
+              <Label htmlFor="glazing">Glazing</Label>
+              <Select
+                value={formData.framingOptions.glazing}
+                onValueChange={(value) => updateNestedFormData('framingOptions', 'glazing', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select glazing option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="glass">Glass</SelectItem>
+                  <SelectItem value="acrylic">Acrylic</SelectItem>
+                  <SelectItem value="uv">UV Protection</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="mounting">Mounting Style</Label>
+              <Input
+                id="mounting"
+                value={formData.framingOptions.mounting}
+                onChange={(e) => updateNestedFormData('framingOptions', 'mounting', e.target.value)}
+                placeholder="e.g., Float mount, Standard mount"
+              />
+            </div>
+            <div>
+              <Label htmlFor="frameDepth">Frame Depth</Label>
+              <Input
+                id="frameDepth"
+                value={formData.framingOptions.depth}
+                onChange={(e) => updateNestedFormData('framingOptions', 'depth', e.target.value)}
+                placeholder="e.g., 1 inch, 2 inches"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Print Media</CardTitle>
+          <CardDescription>Select the print media/paper types you want to offer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              'Satin Photo',
+              'Fine Art Rag',
+              'Textured Matte',
+              'Canvas'
+            ].map((media) => (
+              <div key={media} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`media-${media}`}
+                  checked={formData.printMedia.includes(media)}
+                  onCheckedChange={() => toggleArrayField('printMedia', media)}
+                />
+                <Label htmlFor={`media-${media}`} className="text-sm">{media}</Label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -941,7 +1162,8 @@ export default function ArtistIntakePage() {
 
           {currentSection === 1 && renderSection1()}
           {currentSection === 2 && renderSection2()}
-          {[3, 4, 5, 6, 7, 8].includes(currentSection) && (
+          {currentSection === 3 && renderSection3()}
+          {[4, 5, 6, 7, 8].includes(currentSection) && (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">
@@ -992,9 +1214,9 @@ export default function ArtistIntakePage() {
               <div className="text-xs space-y-1">
                 <p><strong>Current Section:</strong> {currentSection}</p>
                 <p><strong>Artwork Count:</strong> {formData.artworkCatalog.length}</p>
+                <p><strong>Product Types:</strong> {formData.productTypes.join(', ') || 'None selected'}</p>
+                <p><strong>Print Media:</strong> {formData.printMedia.join(', ') || 'None selected'}</p>
                 <p><strong>Form ID:</strong> {formData.id || 'Not assigned yet'}</p>
-                <p><strong>Assistance Needed:</strong> {formData.assistanceNeeded.join(', ') || 'None'}</p>
-                <p><strong>File Preparation:</strong> {formData.filePreparation || 'Not selected'}</p>
               </div>
             </CardContent>
           </Card>
