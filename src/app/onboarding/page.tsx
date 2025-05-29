@@ -96,12 +96,14 @@ interface ArtistIntakeData {
   giftPackaging: boolean
   packagingNotes: string
 
-  // Placeholder sections 6-8
+  // Section 6: Website Structure & Marketing
   websitePages: string[]
   emailMarketing: boolean
   blogUpdates: boolean
   analyticsId: string
   promotionStrategy: string
+
+  // Placeholder sections 7-8
   orderNotifications: string
   customerSupport: string
   returnProcess: string
@@ -1581,6 +1583,175 @@ export default function ArtistIntakePage() {
     </div>
   )
 
+  const renderSection6 = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Website Structure</CardTitle>
+          <CardDescription>
+            Select which pages and sections your website should include
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Select the pages to include on your website:</Label>
+            <div className="space-y-2 mt-2">
+              {[
+                'Home',
+                'Gallery/Shop',
+                'About', 
+                'Contact',
+                'FAQ/Returns',
+                'Blog/Journal',
+                'Commission Info'
+              ].map((page) => (
+                <div key={page} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`page-${page}`}
+                    checked={formData.websitePages.includes(page)}
+                    onCheckedChange={() => toggleArrayField('websitePages', page)}
+                  />
+                  <Label htmlFor={`page-${page}`}>{page}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold mb-2">Recommended Page Structure:</h4>
+            <ul className="space-y-1 text-sm">
+              <li>• <strong>Home:</strong> Welcome visitors with your featured artwork and story</li>
+              <li>• <strong>Gallery/Shop:</strong> Display and sell your artwork</li>
+              <li>• <strong>About:</strong> Share your artistic journey and background</li>
+              <li>• <strong>Contact:</strong> Make it easy for customers to reach you</li>
+              <li>• <strong>FAQ/Returns:</strong> Address common questions and policies</li>
+              <li>• <strong>Blog/Journal:</strong> Share your creative process and updates</li>
+              <li>• <strong>Commission Info:</strong> Details about custom work opportunities</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Content & Marketing Features</CardTitle>
+          <CardDescription>Configure additional website features and marketing tools</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="emailMarketing"
+              checked={formData.emailMarketing}
+              onCheckedChange={(checked) => updateFormData('emailMarketing', checked)}
+            />
+            <Label htmlFor="emailMarketing">
+              Enable email newsletter signup and marketing
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="blogUpdates"
+              checked={formData.blogUpdates}
+              onCheckedChange={(checked) => updateFormData('blogUpdates', checked)}
+            />
+            <Label htmlFor="blogUpdates">
+              Enable blog/journal for sharing updates and process
+            </Label>
+          </div>
+
+          {formData.emailMarketing && (
+            <div className="p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>Email Marketing Benefits:</strong> Stay connected with customers, announce new artwork, 
+                share behind-the-scenes content, and drive repeat sales.
+              </p>
+            </div>
+          )}
+
+          {formData.blogUpdates && (
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Blog Benefits:</strong> Improve SEO, share your creative process, build personal 
+                connections with visitors, and establish yourself as an expert in your field.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Analytics & Tracking</CardTitle>
+          <CardDescription>Set up tracking to understand your website performance</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="analyticsId">Google Analytics ID or Facebook Pixel ID (optional)</Label>
+            <Input
+              id="analyticsId"
+              value={formData.analyticsId}
+              onChange={(e) => updateFormData('analyticsId', e.target.value)}
+              placeholder="e.g., G-XXXXXXXXXX or 123456789012345"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              If you have existing analytics tracking, provide your ID here. We can help set this up if needed.
+            </p>
+          </div>
+
+          <div className="p-4 bg-yellow-50 rounded-lg">
+            <h4 className="font-semibold mb-2">Why Analytics Matter:</h4>
+            <ul className="space-y-1 text-sm text-yellow-800">
+              <li>• Track which artworks are most popular</li>
+              <li>• Understand where your visitors come from</li>
+              <li>• Monitor sales conversion rates</li>
+              <li>• Optimize your marketing efforts</li>
+              <li>• Make data-driven decisions about your art business</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Promotion & Discount Strategy</CardTitle>
+          <CardDescription>Plan your promotional campaigns and discount offerings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="promotionStrategy">Describe your promotional and discount strategy</Label>
+            <Textarea
+              id="promotionStrategy"
+              value={formData.promotionStrategy}
+              onChange={(e) => updateFormData('promotionStrategy', e.target.value)}
+              placeholder="e.g., Launch discount for first customers, seasonal sales, limited-time offers for email subscribers, bulk purchase discounts, student discounts, etc."
+              rows={4}
+            />
+          </div>
+
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold mb-2">Promotion Ideas:</h4>
+            <ul className="space-y-1 text-sm">
+              <li>• <strong>Launch Special:</strong> 10-20% off for first-time customers</li>
+              <li>• <strong>Email Subscriber Perks:</strong> Exclusive early access to new work</li>
+              <li>• <strong>Seasonal Sales:</strong> Holiday discounts, end-of-year clearance</li>
+              <li>• <strong>Bundle Deals:</strong> Buy 2 prints, get 1 at 50% off</li>
+              <li>• <strong>Limited Time:</strong> Flash sales for social media followers</li>
+              <li>• <strong>Loyalty Program:</strong> Return customer discounts</li>
+            </ul>
+          </div>
+
+          <div className="p-4 bg-green-50 rounded-lg">
+            <p className="text-sm text-green-800">
+              <strong>Note:</strong> We'll integrate discount code functionality and automated promotional tools 
+              based on your strategy. You'll have full control over when and how to offer promotions.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -1656,7 +1827,8 @@ export default function ArtistIntakePage() {
           {currentSection === 3 && renderSection3()}
           {currentSection === 4 && renderSection4()}
           {currentSection === 5 && renderSection5()}
-          {[6, 7, 8].includes(currentSection) && (
+          {currentSection === 6 && renderSection6()}
+          {[7, 8].includes(currentSection) && (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">
@@ -1712,6 +1884,10 @@ export default function ArtistIntakePage() {
                 <p><strong>Pricing Model:</strong> {formData.pricingModel || 'Not selected'}</p>
                 <p><strong>Shipping Model:</strong> {formData.shippingModel || 'Not selected'}</p>
                 <p><strong>Packaging Prefs:</strong> {formData.packagingPreferences.join(', ') || 'None selected'}</p>
+                <p><strong>Website Pages:</strong> {formData.websitePages.join(', ') || 'None selected'}</p>
+                <p><strong>Email Marketing:</strong> {formData.emailMarketing ? 'Enabled' : 'Disabled'}</p>
+                <p><strong>Blog Updates:</strong> {formData.blogUpdates ? 'Enabled' : 'Disabled'}</p>
+                <p><strong>Analytics ID:</strong> {formData.analyticsId || 'Not provided'}</p>
                 <p><strong>Form ID:</strong> {formData.id || 'Not assigned yet'}</p>
               </div>
             </CardContent>
