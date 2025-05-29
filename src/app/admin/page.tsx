@@ -159,7 +159,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-pulse">🚀 SYSTEM REPO DEPLOYMENT - Connecting to database...</div>
+          <div className="animate-pulse text-lg font-medium">Loading artists...</div>
         </div>
       </div>
     )
@@ -172,14 +172,14 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              🚀 FIXED ADMIN DASHBOARD - SYSTEM REPO
+              Artist Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">
-              Connected to your real Supabase database with 6 artists including Alan Moss
+              Manage and monitor your artist onboarding progress
             </p>
             {artists.length > 0 && (
               <Badge variant="default" className="mt-2 bg-green-600">
-                ✅ DEPLOYMENT SUCCESS - {artists.length} real artists found
+                ✅ Connected - {artists.length} artists found
               </Badge>
             )}
             {error && (
@@ -254,9 +254,9 @@ export default function AdminDashboard() {
         {/* Search and Filter */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Artist Search & Filter</CardTitle>
+            <CardTitle>Search & Filter Artists</CardTitle>
             <CardDescription>
-              Search and filter your real database artists including Alan Moss
+              Find and filter artists by name, studio, email, or status
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -286,9 +286,9 @@ export default function AdminDashboard() {
         {/* Artists Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Real Database Artists</CardTitle>
+            <CardTitle>Artist Profiles</CardTitle>
             <CardDescription>
-              {filteredArtists.length} of {artists.length} artists shown from your Supabase database
+              {filteredArtists.length} of {artists.length} artists shown
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -314,14 +314,14 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                        <span>ID: {artist.id}</span>
+                        <span>ID: {artist.id.substring(0, 8)}...</span>
                         <span>Updated: {new Date(artist.lastUpdated).toLocaleDateString()}</span>
-                        <span>Raw Data Available</span>
+                        <span>Section Progress: {artist.completedSections?.length || 0}/4</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
-                        View Raw Data
+                        View Details
                       </Button>
                     </div>
                   </div>
@@ -347,29 +347,31 @@ export default function AdminDashboard() {
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Raw Database Data: {selectedArtist.firstName} {selectedArtist.lastName}
+                Artist Details: {selectedArtist.firstName} {selectedArtist.lastName}
                 <Button variant="outline" onClick={() => setSelectedArtist(null)}>
                   Close
                 </Button>
               </CardTitle>
               <CardDescription>
-                Raw data from your Supabase database
+                Complete artist profile and onboarding information
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <strong>Processed Data:</strong>
+                    <strong>Personal Information:</strong>
                     <p>Name: {selectedArtist.firstName} {selectedArtist.lastName}</p>
                     <p>Email: {selectedArtist.email}</p>
                     <p>Studio: {selectedArtist.studioName}</p>
                     <p>Status: {selectedArtist.status}</p>
                   </div>
                   <div>
-                    <strong>Database Info:</strong>
-                    <p>ID: {selectedArtist.id}</p>
+                    <strong>Progress Information:</strong>
+                    <p>Artist ID: {selectedArtist.id}</p>
                     <p>Last Updated: {new Date(selectedArtist.lastUpdated).toLocaleString()}</p>
+                    <p>Completed Sections: {selectedArtist.completedSections?.length || 0}/4</p>
+                    <p>Completion: {selectedArtist.completionPercentage || 0}%</p>
                   </div>
                 </div>
                 
