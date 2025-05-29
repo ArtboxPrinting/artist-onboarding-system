@@ -123,6 +123,9 @@ export default function AdminDashboard() {
     // Section 4: Pricing
     if (intakeData.pricingModel) sections.push(4)
     
+    // Section 5: Shipping
+    if (intakeData.shippingModel) sections.push(5)
+    
     // Add checks for other sections as they're built
     
     return sections
@@ -176,6 +179,7 @@ export default function AdminDashboard() {
     section2: artists.filter(a => a.completedSections?.includes(2)).length,
     section3: artists.filter(a => a.completedSections?.includes(3)).length,
     section4: artists.filter(a => a.completedSections?.includes(4)).length,
+    section5: artists.filter(a => a.completedSections?.includes(5)).length,
     complete: artists.filter(a => a.completedSections?.length === 8).length
   }
 
@@ -293,7 +297,7 @@ export default function AdminDashboard() {
             <CardDescription>Track how many artists have completed each section</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{completionStats.section1}</div>
                 <div className="text-sm text-muted-foreground">Section 1: Profile</div>
@@ -309,6 +313,10 @@ export default function AdminDashboard() {
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">{completionStats.section4}</div>
                 <div className="text-sm text-muted-foreground">Section 4: Pricing</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{completionStats.section5}</div>
+                <div className="text-sm text-muted-foreground">Section 5: Shipping</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-400">{completionStats.complete}</div>
@@ -545,6 +553,47 @@ export default function AdminDashboard() {
                       )}
                       {selectedArtist.rawData.intake_data.wholesalePricing && (
                         <p><strong>Wholesale Pricing:</strong> ✅ Yes ({selectedArtist.rawData.intake_data.wholesaleDiscount}% discount)</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 5: Shipping & Packaging */}
+                {selectedArtist.rawData?.intake_data?.shippingModel && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Section 5: Shipping & Packaging</h4>
+                    <div className="space-y-2">
+                      <p><strong>Shipping Model:</strong> 
+                        {selectedArtist.rawData.intake_data.shippingModel === 'free' && 'Free Shipping'}
+                        {selectedArtist.rawData.intake_data.shippingModel === 'flat' && 'Flat Rate Shipping'}
+                        {selectedArtist.rawData.intake_data.shippingModel === 'calculated' && 'Real-time Calculated'}
+                      </p>
+                      {selectedArtist.rawData.intake_data.locationsServed?.length > 0 && (
+                        <p><strong>Locations Served:</strong> {selectedArtist.rawData.intake_data.locationsServed.join(', ')}</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.standardTurnaround && (
+                        <p><strong>Standard Turnaround:</strong> {selectedArtist.rawData.intake_data.standardTurnaround}</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.expressOptions && (
+                        <p><strong>Express Options:</strong> {selectedArtist.rawData.intake_data.expressOptions}</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.expressUpcharge && (
+                        <p><strong>Express Upcharge:</strong> +${selectedArtist.rawData.intake_data.expressUpcharge}</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.signatureRequired && (
+                        <p><strong>Signature Required:</strong> ✅ Yes</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.packagingPreferences?.length > 0 && (
+                        <p><strong>Packaging:</strong> {selectedArtist.rawData.intake_data.packagingPreferences.join(', ')}</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.brandedInserts && (
+                        <p><strong>Branded Inserts:</strong> ✅ Yes</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.certificateAuthenticity && (
+                        <p><strong>Certificate of Authenticity:</strong> ✅ Yes</p>
+                      )}
+                      {selectedArtist.rawData.intake_data.giftPackaging && (
+                        <p><strong>Gift Packaging:</strong> ✅ Available</p>
                       )}
                     </div>
                   </div>
