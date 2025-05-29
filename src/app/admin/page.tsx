@@ -126,6 +126,11 @@ export default function AdminDashboard() {
     // Section 5: Shipping
     if (intakeData.shippingModel) sections.push(5)
     
+    // Section 6: Website Structure & Marketing
+    if (intakeData.websitePages?.length > 0 || intakeData.emailMarketing || intakeData.blogUpdates || intakeData.analyticsId || intakeData.promotionStrategy) {
+      sections.push(6)
+    }
+    
     // Add checks for other sections as they're built
     
     return sections
@@ -180,6 +185,7 @@ export default function AdminDashboard() {
     section3: artists.filter(a => a.completedSections?.includes(3)).length,
     section4: artists.filter(a => a.completedSections?.includes(4)).length,
     section5: artists.filter(a => a.completedSections?.includes(5)).length,
+    section6: artists.filter(a => a.completedSections?.includes(6)).length,
     complete: artists.filter(a => a.completedSections?.length === 8).length
   }
 
@@ -297,7 +303,7 @@ export default function AdminDashboard() {
             <CardDescription>Track how many artists have completed each section</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{completionStats.section1}</div>
                 <div className="text-sm text-muted-foreground">Section 1: Profile</div>
@@ -317,6 +323,10 @@ export default function AdminDashboard() {
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">{completionStats.section5}</div>
                 <div className="text-sm text-muted-foreground">Section 5: Shipping</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-600">{completionStats.section6}</div>
+                <div className="text-sm text-muted-foreground">Section 6: Website</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-400">{completionStats.complete}</div>
@@ -594,6 +604,41 @@ export default function AdminDashboard() {
                       )}
                       {selectedArtist.rawData.intake_data.giftPackaging && (
                         <p><strong>Gift Packaging:</strong> ✅ Available</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 6: Website Structure & Marketing */}
+                {(selectedArtist.rawData?.intake_data?.websitePages?.length > 0 || 
+                  selectedArtist.rawData?.intake_data?.emailMarketing || 
+                  selectedArtist.rawData?.intake_data?.blogUpdates || 
+                  selectedArtist.rawData?.intake_data?.analyticsId || 
+                  selectedArtist.rawData?.intake_data?.promotionStrategy) && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Section 6: Website Structure & Marketing</h4>
+                    <div className="space-y-2">
+                      {selectedArtist.rawData.intake_data.websitePages?.length > 0 && (
+                        <p><strong>Website Pages:</strong> {selectedArtist.rawData.intake_data.websitePages.join(', ')}</p>
+                      )}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p><strong>Email Marketing:</strong> {selectedArtist.rawData.intake_data.emailMarketing ? '✅ Enabled' : '❌ Disabled'}</p>
+                          <p><strong>Blog/Journal:</strong> {selectedArtist.rawData.intake_data.blogUpdates ? '✅ Enabled' : '❌ Disabled'}</p>
+                        </div>
+                        <div>
+                          {selectedArtist.rawData.intake_data.analyticsId && (
+                            <p><strong>Analytics ID:</strong> {selectedArtist.rawData.intake_data.analyticsId}</p>
+                          )}
+                        </div>
+                      </div>
+                      {selectedArtist.rawData.intake_data.promotionStrategy && (
+                        <div className="mt-2">
+                          <p><strong>Promotion Strategy:</strong></p>
+                          <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                            {selectedArtist.rawData.intake_data.promotionStrategy}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
