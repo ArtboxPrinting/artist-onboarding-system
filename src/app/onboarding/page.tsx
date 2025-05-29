@@ -83,13 +83,20 @@ interface ArtistIntakeData {
   wholesalePricing: boolean
   wholesaleDiscount: string
 
-  // Placeholder sections 5-8
+  // Section 5: Shipping & Packaging
   shippingModel: string
   locationsServed: string[]
   standardTurnaround: string
   expressOptions: string
+  expressUpcharge: string
   signatureRequired: boolean
   packagingPreferences: string[]
+  brandedInserts: boolean
+  certificateAuthenticity: boolean
+  giftPackaging: boolean
+  packagingNotes: string
+
+  // Placeholder sections 6-8
   websitePages: string[]
   emailMarketing: boolean
   blogUpdates: boolean
@@ -180,8 +187,13 @@ export default function ArtistIntakePage() {
     locationsServed: [],
     standardTurnaround: '',
     expressOptions: '',
+    expressUpcharge: '',
     signatureRequired: false,
     packagingPreferences: [],
+    brandedInserts: false,
+    certificateAuthenticity: false,
+    giftPackaging: false,
+    packagingNotes: '',
     websitePages: [],
     emailMarketing: false,
     blogUpdates: false,
@@ -1362,6 +1374,213 @@ export default function ArtistIntakePage() {
     </div>
   )
 
+  const renderSection5 = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Shipping Setup</CardTitle>
+          <CardDescription>
+            Configure how shipping costs will be calculated and displayed
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Preferred shipping model:</Label>
+            <div className="space-y-2 mt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="free-shipping"
+                  checked={formData.shippingModel === 'free'}
+                  onCheckedChange={(checked) => updateFormData('shippingModel', checked ? 'free' : '')}
+                />
+                <Label htmlFor="free-shipping">Free shipping (built into product prices)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="flat-rate"
+                  checked={formData.shippingModel === 'flat'}
+                  onCheckedChange={(checked) => updateFormData('shippingModel', checked ? 'flat' : '')}
+                />
+                <Label htmlFor="flat-rate">Flat rate shipping</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="real-time"
+                  checked={formData.shippingModel === 'calculated'}
+                  onCheckedChange={(checked) => updateFormData('shippingModel', checked ? 'calculated' : '')}
+                />
+                <Label htmlFor="real-time">Real-time calculated shipping rates</Label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>Locations served:</Label>
+            <div className="space-y-2 mt-2">
+              {[
+                'Domestic only',
+                'United States',
+                'Canada', 
+                'International'
+              ].map((location) => (
+                <div key={location} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`location-${location}`}
+                    checked={formData.locationsServed.includes(location)}
+                    onCheckedChange={() => toggleArrayField('locationsServed', location)}
+                  />
+                  <Label htmlFor={`location-${location}`}>{location}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fulfillment Timing</CardTitle>
+          <CardDescription>Set expectations for order processing and shipping times</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="standardTurnaround">Standard turnaround time</Label>
+            <Select
+              value={formData.standardTurnaround}
+              onValueChange={(value) => updateFormData('standardTurnaround', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select standard turnaround" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1-2 business days">1-2 business days</SelectItem>
+                <SelectItem value="3-5 business days">3-5 business days</SelectItem>
+                <SelectItem value="5-7 business days">5-7 business days</SelectItem>
+                <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
+                <SelectItem value="2-3 weeks">2-3 weeks</SelectItem>
+                <SelectItem value="3-4 weeks">3-4 weeks</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="expressOptions">Express shipping options</Label>
+            <Input
+              id="expressOptions"
+              value={formData.expressOptions}
+              onChange={(e) => updateFormData('expressOptions', e.target.value)}
+              placeholder="e.g., Rush orders available for next-day shipping"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="expressUpcharge">Express shipping upcharge</Label>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">+$</span>
+              <Input
+                id="expressUpcharge"
+                type="number"
+                value={formData.expressUpcharge}
+                onChange={(e) => updateFormData('expressUpcharge', e.target.value)}
+                placeholder="15.00"
+                step="0.01"
+                className="max-w-32"
+              />
+              <span className="text-sm text-muted-foreground">additional for express orders</span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="signatureRequired"
+              checked={formData.signatureRequired}
+              onCheckedChange={(checked) => updateFormData('signatureRequired', checked)}
+            />
+            <Label htmlFor="signatureRequired">
+              Require signature for delivery on high-value orders
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Packaging Preferences</CardTitle>
+          <CardDescription>Configure how your artwork will be packaged and presented</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Packaging options to include:</Label>
+            <div className="space-y-2 mt-2">
+              {[
+                'Eco-friendly materials',
+                'Protective backing boards',
+                'Moisture protection',
+                'Branded packaging',
+                'Thank you cards'
+              ].map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`packaging-${option}`}
+                    checked={formData.packagingPreferences.includes(option)}
+                    onCheckedChange={() => toggleArrayField('packagingPreferences', option)}
+                  />
+                  <Label htmlFor={`packaging-${option}`}>{option}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="brandedInserts"
+                checked={formData.brandedInserts}
+                onCheckedChange={(checked) => updateFormData('brandedInserts', checked)}
+              />
+              <Label htmlFor="brandedInserts">
+                Include branded insert cards with artist information
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="certificateAuthenticity"
+                checked={formData.certificateAuthenticity}
+                onCheckedChange={(checked) => updateFormData('certificateAuthenticity', checked)}
+              />
+              <Label htmlFor="certificateAuthenticity">
+                Include certificate of authenticity
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="giftPackaging"
+                checked={formData.giftPackaging}
+                onCheckedChange={(checked) => updateFormData('giftPackaging', checked)}
+              />
+              <Label htmlFor="giftPackaging">
+                Offer gift packaging option (may include additional fee)
+              </Label>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="packagingNotes">Additional packaging notes or requirements</Label>
+            <Textarea
+              id="packagingNotes"
+              value={formData.packagingNotes}
+              onChange={(e) => updateFormData('packagingNotes', e.target.value)}
+              placeholder="Any special instructions for packaging your artwork..."
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -1436,7 +1655,8 @@ export default function ArtistIntakePage() {
           {currentSection === 2 && renderSection2()}
           {currentSection === 3 && renderSection3()}
           {currentSection === 4 && renderSection4()}
-          {[5, 6, 7, 8].includes(currentSection) && (
+          {currentSection === 5 && renderSection5()}
+          {[6, 7, 8].includes(currentSection) && (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground">
@@ -1490,6 +1710,8 @@ export default function ArtistIntakePage() {
                 <p><strong>Product Types:</strong> {formData.productTypes.join(', ') || 'None selected'}</p>
                 <p><strong>Print Media:</strong> {formData.printMedia.join(', ') || 'None selected'}</p>
                 <p><strong>Pricing Model:</strong> {formData.pricingModel || 'Not selected'}</p>
+                <p><strong>Shipping Model:</strong> {formData.shippingModel || 'Not selected'}</p>
+                <p><strong>Packaging Prefs:</strong> {formData.packagingPreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Form ID:</strong> {formData.id || 'Not assigned yet'}</p>
               </div>
             </CardContent>
