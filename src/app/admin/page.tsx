@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from '@supabase/supabase-js'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,7 +14,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 
-// Enhanced artist data structure for all 4 sections
+// Enhanced artist data structure
 interface ArtistProfile {
   id: string
   firstName: string
@@ -23,7 +22,7 @@ interface ArtistProfile {
   studioName: string
   email: string
   phone?: string
-  status: "draft" | "in_review" | "ready" | "active"
+  status: "draft" | "in_review" | "ready" | "active" | "submitted"
   submissionDate?: string
   completedSections: number[]
   lastUpdated: string
@@ -37,7 +36,8 @@ const STATUS_COLORS = {
   draft: "bg-gray-100 text-gray-800",
   in_review: "bg-yellow-100 text-yellow-800", 
   ready: "bg-blue-100 text-blue-800",
-  active: "bg-green-100 text-green-800"
+  active: "bg-green-100 text-green-800",
+  submitted: "bg-purple-100 text-purple-800"
 }
 
 export default function AdminDashboard() {
@@ -49,70 +49,82 @@ export default function AdminDashboard() {
   const [selectedArtist, setSelectedArtist] = useState<ArtistProfile | null>(null)
   const [sortBy, setSortBy] = useState<string>("lastUpdated")
 
-  // Direct Supabase connection
-  const fetchArtistsDirectly = async () => {
+  // Fetch from artist_intakes table via API
+  const fetchArtistIntakes = async () => {
     try {
       setLoading(true)
       setError("")
       
-      // Use environment variables directly
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      console.log('Fetching artist intakes from API...')
 
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase environment variables not configured')
+      const response = await fetch('/api/artist-intake', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`)
       }
 
-      // Create direct Supabase client
-      const supabase = createClient(supabaseUrl, supabaseKey)
+      const result = await response.json()
       
-      console.log('Connecting directly to Supabase...')
-
-      // Query the artists table directly
-      const { data: artistsData, error: dbError } = await supabase
-        .from('artists')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (dbError) {
-        console.error('Database error:', dbError)
-        throw new Error(`Database query failed: ${dbError.message}`)
+      if (!result.success) {
+        throw new Error(result.error || 'API returned unsuccessful response')
       }
 
-      console.log('Found artists in database:', artistsData?.length || 0)
-      console.log('Sample artist data:', artistsData?.[0])
+      console.log('Found artist intakes:', result.data?.length || 0)
+      console.log('Sample intake data:', result.data?.[0])
 
-      // Transform the raw database data
-      const transformedArtists = artistsData?.map((artist, index) => ({
-        id: artist.id || artist.artist_id || `artist-${index}`,
-        firstName: artist.first_name || artist.full_name?.split(' ')[0] || artist.name?.split(' ')[0] || 'Unknown',
-        lastName: artist.last_name || artist.full_name?.split(' ').slice(1).join(' ') || artist.name?.split(' ').slice(1).join(' ') || '',
-        studioName: artist.studio_name || artist.business_name || artist.company || 'Studio Name Not Set',
-        email: artist.email || 'email@example.com',
-        phone: artist.phone || artist.phone_number || '',
-        status: artist.status || 'draft',
-        completedSections: [1], // Default to section 1 complete
-        artworkCount: artist.artwork_count || 0,
-        variantCount: artist.variant_count || 0,
-        lastUpdated: artist.updated_at || artist.created_at || new Date().toISOString(),
-        submissionDate: artist.created_at || new Date().toISOString(),
-        completionPercentage: 25, // Default to 25% for section 1
-        rawData: artist // Keep raw data for debugging
-      })) || []
+      // Transform the intake data
+      const transformedArtists = result.data?.map((intake: any, index: number) => {
+        const intakeData = intake.intake_data || {}
+        return {
+          id: intake.id || `intake-${index}`,
+          firstName: intakeData.fullName?.split(' ')[0] || intake.full_name?.split(' ')[0] || 'Unknown',
+          lastName: intakeData.fullName?.split(' ').slice(1).join(' ') || intake.full_name?.split(' ').slice(1).join(' ') || '',
+          studioName: intakeData.studioName || 'Studio Name Not Set',
+          email: intakeData.email || intake.email || 'email@example.com',
+          phone: intakeData.phone || '',
+          status: intake.status || 'draft',
+          completedSections: [1, ...(intakeData.artworkCatalog?.length > 0 ? [2] : [])], // Mark section 2 complete if artwork exists
+          artworkCount: intakeData.artworkCatalog?.length || 0,
+          variantCount: 0, // Will calculate from other sections later
+          lastUpdated: intake.updated_at || intake.created_at || new Date().toISOString(),
+          submissionDate: intake.submitted_at || intake.created_at || new Date().toISOString(),
+          completionPercentage: calculateCompletion(intakeData),
+          rawData: intake // Keep full data for debugging
+        }
+      }) || []
 
       setArtists(transformedArtists)
       
     } catch (err) {
-      console.error('Error fetching artists directly:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch artists from database')
+      console.error('Error fetching artist intakes:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch artist intakes')
     } finally {
       setLoading(false)
     }
   }
 
+  const calculateCompletion = (intakeData: any) => {
+    let completedSections = 0
+    
+    // Section 1: Basic info
+    if (intakeData.fullName && intakeData.email) completedSections++
+    
+    // Section 2: Artwork catalog
+    if (intakeData.artworkCatalog?.length > 0) completedSections++
+    
+    // Add checks for other sections as they're built
+    
+    return (completedSections / 8) * 100
+  }
+
   // Fetch artists on component mount
   useEffect(() => {
-    fetchArtistsDirectly()
+    fetchArtistIntakes()
   }, [])
 
   const filteredArtists = artists.filter(artist => {
@@ -144,7 +156,8 @@ export default function AdminDashboard() {
     draft: artists.filter(a => a.status === "draft").length,
     in_review: artists.filter(a => a.status === "in_review").length,
     ready: artists.filter(a => a.status === "ready").length,
-    active: artists.filter(a => a.status === "active").length
+    active: artists.filter(a => a.status === "active").length,
+    submitted: artists.filter(a => a.status === "submitted").length
   }
 
   const completionStats = {
@@ -152,14 +165,14 @@ export default function AdminDashboard() {
     section2: artists.filter(a => a.completedSections?.includes(2)).length,
     section3: artists.filter(a => a.completedSections?.includes(3)).length,
     section4: artists.filter(a => a.completedSections?.includes(4)).length,
-    complete: artists.filter(a => a.completedSections?.length === 4).length
+    complete: artists.filter(a => a.completedSections?.length === 8).length
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-pulse text-lg font-medium">Loading artists...</div>
+          <div className="animate-pulse text-lg font-medium">Loading artist intakes...</div>
         </div>
       </div>
     )
@@ -172,14 +185,14 @@ export default function AdminDashboard() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Artist Dashboard
+              🎨 Artist Intake Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">
-              Manage and monitor your artist onboarding progress
+              Monitor artist onboarding progress and intake submissions
             </p>
             {artists.length > 0 && (
               <Badge variant="default" className="mt-2 bg-green-600">
-                ✅ Connected - {artists.length} artists found
+                ✅ Connected - {artists.length} artist intakes found
               </Badge>
             )}
             {error && (
@@ -189,8 +202,11 @@ export default function AdminDashboard() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => fetchArtistsDirectly()}>
+            <Button variant="outline" onClick={() => fetchArtistIntakes()}>
               Refresh Data
+            </Button>
+            <Button onClick={() => window.location.href = '/onboarding'}>
+              ➕ New Artist Intake
             </Button>
           </div>
         </div>
@@ -200,7 +216,7 @@ export default function AdminDashboard() {
           <Alert className="mb-8 border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">
               <strong>Database Connection Error:</strong> {error}
-              <Button variant="outline" size="sm" onClick={fetchArtistsDirectly} className="ml-4">
+              <Button variant="outline" size="sm" onClick={fetchArtistIntakes} className="ml-4">
                 Retry Connection
               </Button>
             </AlertDescription>
@@ -208,11 +224,11 @@ export default function AdminDashboard() {
         )}
 
         {/* Status Overview Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Artists
+                Total Intakes
               </CardTitle>
               <div className="text-2xl font-bold">{statusCounts.total}</div>
             </CardHeader>
@@ -223,6 +239,14 @@ export default function AdminDashboard() {
                 Draft
               </CardTitle>
               <div className="text-2xl font-bold text-gray-600">{statusCounts.draft}</div>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Submitted
+              </CardTitle>
+              <div className="text-2xl font-bold text-purple-600">{statusCounts.submitted}</div>
             </CardHeader>
           </Card>
           <Card>
@@ -251,12 +275,44 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Completion Stats */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Section Completion Statistics</CardTitle>
+            <CardDescription>Track how many artists have completed each section</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{completionStats.section1}</div>
+                <div className="text-sm text-muted-foreground">Section 1: Profile</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{completionStats.section2}</div>
+                <div className="text-sm text-muted-foreground">Section 2: Artwork</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-400">{completionStats.section3}</div>
+                <div className="text-sm text-muted-foreground">Section 3: Products</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-400">{completionStats.section4}</div>
+                <div className="text-sm text-muted-foreground">Section 4: Pricing</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">{completionStats.complete}</div>
+                <div className="text-sm text-muted-foreground">Complete (8/8)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Search and Filter */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Search & Filter Artists</CardTitle>
+            <CardTitle>Search & Filter Artist Intakes</CardTitle>
             <CardDescription>
-              Find and filter artists by name, studio, email, or status
+              Find and filter artist intake submissions
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -274,6 +330,7 @@ export default function AdminDashboard() {
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
                   <SelectItem value="in_review">In Review</SelectItem>
                   <SelectItem value="ready">Ready</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
@@ -286,9 +343,9 @@ export default function AdminDashboard() {
         {/* Artists Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Artist Profiles</CardTitle>
+            <CardTitle>Artist Intake Submissions</CardTitle>
             <CardDescription>
-              {filteredArtists.length} of {artists.length} artists shown
+              {filteredArtists.length} of {artists.length} intakes shown
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -316,7 +373,10 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <span>ID: {artist.id.substring(0, 8)}...</span>
                         <span>Updated: {new Date(artist.lastUpdated).toLocaleDateString()}</span>
-                        <span>Section Progress: {artist.completedSections?.length || 0}/4</span>
+                        <span>Sections: {artist.completedSections?.length || 0}/8</span>
+                        <span className="font-medium text-green-600">
+                          🎨 {artist.artworkCount} artworks
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -333,10 +393,16 @@ export default function AdminDashboard() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
                   {artists.length === 0 
-                    ? "No artists found in your database. Check your Supabase connection." 
-                    : "No artists found matching your search criteria."
+                    ? "No artist intakes found. Encourage artists to complete the onboarding form." 
+                    : "No intakes found matching your search criteria."
                   }
                 </p>
+                <Button 
+                  onClick={() => window.location.href = '/onboarding'} 
+                  className="mt-4"
+                >
+                  Start New Artist Intake
+                </Button>
               </div>
             )}
           </CardContent>
@@ -347,39 +413,94 @@ export default function AdminDashboard() {
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Artist Details: {selectedArtist.firstName} {selectedArtist.lastName}
+                Intake Details: {selectedArtist.firstName} {selectedArtist.lastName}
                 <Button variant="outline" onClick={() => setSelectedArtist(null)}>
                   Close
                 </Button>
               </CardTitle>
               <CardDescription>
-                Complete artist profile and onboarding information
+                Complete artist intake information and progress
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <strong>Personal Information:</strong>
-                    <p>Name: {selectedArtist.firstName} {selectedArtist.lastName}</p>
-                    <p>Email: {selectedArtist.email}</p>
-                    <p>Studio: {selectedArtist.studioName}</p>
-                    <p>Status: {selectedArtist.status}</p>
+                    <h4 className="font-semibold mb-2">Personal Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Name:</strong> {selectedArtist.firstName} {selectedArtist.lastName}</p>
+                      <p><strong>Email:</strong> {selectedArtist.email}</p>
+                      <p><strong>Studio:</strong> {selectedArtist.studioName}</p>
+                      <p><strong>Phone:</strong> {selectedArtist.phone || 'Not provided'}</p>
+                      <p><strong>Status:</strong> 
+                        <Badge className={`ml-2 ${STATUS_COLORS[selectedArtist.status]}`}>
+                          {selectedArtist.status}
+                        </Badge>
+                      </p>
+                    </div>
                   </div>
                   <div>
-                    <strong>Progress Information:</strong>
-                    <p>Artist ID: {selectedArtist.id}</p>
-                    <p>Last Updated: {new Date(selectedArtist.lastUpdated).toLocaleString()}</p>
-                    <p>Completed Sections: {selectedArtist.completedSections?.length || 0}/4</p>
-                    <p>Completion: {selectedArtist.completionPercentage || 0}%</p>
+                    <h4 className="font-semibold mb-2">Progress Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><strong>Intake ID:</strong> {selectedArtist.id}</p>
+                      <p><strong>Last Updated:</strong> {new Date(selectedArtist.lastUpdated).toLocaleString()}</p>
+                      <p><strong>Completed Sections:</strong> {selectedArtist.completedSections?.length || 0}/8</p>
+                      <p><strong>Completion:</strong> {Math.round(selectedArtist.completionPercentage || 0)}%</p>
+                      <p><strong>Artwork Count:</strong> 🎨 {selectedArtist.artworkCount} pieces</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Section 2: Artwork Details */}
+                {selectedArtist.rawData?.intake_data?.artworkCatalog?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Section 2: Artwork Catalog</h4>
+                    <div className="space-y-3">
+                      {selectedArtist.rawData.intake_data.artworkCatalog.map((artwork: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4 bg-muted/30">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p><strong>Title:</strong> {artwork.title || 'Untitled'}</p>
+                              <p><strong>Year:</strong> {artwork.yearCreated || 'Not specified'}</p>
+                              <p><strong>Medium:</strong> {artwork.medium || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p><strong>Orientation:</strong> {artwork.orientation || 'Not specified'}</p>
+                              <p><strong>Keywords:</strong> {artwork.keywords || 'None'}</p>
+                            </div>
+                          </div>
+                          {artwork.description && (
+                            <div className="mt-2">
+                              <p><strong>Description:</strong> {artwork.description}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* File Preparation Info */}
+                {selectedArtist.rawData?.intake_data?.filePreparation && (
+                  <div>
+                    <h4 className="font-semibold mb-2">File Preparation</h4>
+                    <div className="text-sm space-y-1">
+                      <p><strong>File Status:</strong> {selectedArtist.rawData.intake_data.filePreparation}</p>
+                      <p><strong>Upload Method:</strong> {selectedArtist.rawData.intake_data.uploadMethod || 'Not specified'}</p>
+                      {selectedArtist.rawData.intake_data.assistanceNeeded?.length > 0 && (
+                        <p><strong>Assistance Needed:</strong> {selectedArtist.rawData.intake_data.assistanceNeeded.join(', ')}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <strong>Raw Database Record:</strong>
-                  <pre className="mt-2 text-xs overflow-auto">
-                    {JSON.stringify(selectedArtist.rawData, null, 2)}
-                  </pre>
+                  <details>
+                    <summary className="font-semibold cursor-pointer">Raw Database Record (Debug)</summary>
+                    <pre className="mt-2 text-xs overflow-auto max-h-64">
+                      {JSON.stringify(selectedArtist.rawData, null, 2)}
+                    </pre>
+                  </details>
                 </div>
               </div>
             </CardContent>
