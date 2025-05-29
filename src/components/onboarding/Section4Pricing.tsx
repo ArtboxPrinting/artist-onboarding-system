@@ -17,6 +17,29 @@ interface Section4Props {
   artistInitials?: string
 }
 
+// Add proper TypeScript interface for form data
+interface FormData {
+  pricingStrategy: string
+  basePrice: string
+  markupPercentage: string
+  premiumMarkup: string
+  volumeDiscounts: boolean
+  customPricing: string
+  shippingStrategy: string
+  internationalShipping: boolean
+  taxHandling: string
+  specialOffers: string
+  priceRangeMin: string
+  priceRangeMax: string
+}
+
+// Price example interface
+interface PriceExample {
+  size: string
+  cost: number
+  price: number
+}
+
 export default function Section4Pricing({
   onSectionComplete,
   onSaveProgress,
@@ -25,7 +48,7 @@ export default function Section4Pricing({
   updateSectionData,
   artistInitials
 }: Section4Props) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     pricingStrategy: "",
     basePrice: "",
     markupPercentage: "",
@@ -42,11 +65,11 @@ export default function Section4Pricing({
   })
 
   const [isValid, setIsValid] = useState(false)
-  const [priceExamples, setPriceExamples] = useState([])
+  const [priceExamples, setPriceExamples] = useState<PriceExample[]>([])
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }))
+      setFormData((prev: FormData) => ({ ...prev, ...initialData }))
     }
   }, [initialData])
 
@@ -74,7 +97,7 @@ export default function Section4Pricing({
 
     if (!baseCost || !markup) return
 
-    const examples = [
+    const examples: PriceExample[] = [
       { size: "8x10 Standard", cost: baseCost, price: Math.round(baseCost * (1 + markup) * 100) / 100 },
       { size: "11x14 Premium", cost: baseCost * 1.5, price: Math.round(baseCost * 1.5 * (1 + markup) * 100) / 100 },
       { size: "16x20 Canvas", cost: baseCost * 2, price: Math.round(baseCost * 2 * (1 + markup) * 100) / 100 }
@@ -131,7 +154,7 @@ export default function Section4Pricing({
                 name="pricingStrategy"
                 value="cost-plus"
                 checked={formData.pricingStrategy === "cost-plus"}
-                onChange={(e) => setFormData(prev => ({ ...prev, pricingStrategy: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, pricingStrategy: e.target.value }))}
                 className="mt-1"
               />
               <div>
@@ -148,7 +171,7 @@ export default function Section4Pricing({
                 name="pricingStrategy"
                 value="value-based"
                 checked={formData.pricingStrategy === "value-based"}
-                onChange={(e) => setFormData(prev => ({ ...prev, pricingStrategy: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, pricingStrategy: e.target.value }))}
                 className="mt-1"
               />
               <div>
@@ -165,7 +188,7 @@ export default function Section4Pricing({
                 name="pricingStrategy"
                 value="competitive"
                 checked={formData.pricingStrategy === "competitive"}
-                onChange={(e) => setFormData(prev => ({ ...prev, pricingStrategy: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, pricingStrategy: e.target.value }))}
                 className="mt-1"
               />
               <div>
@@ -182,7 +205,7 @@ export default function Section4Pricing({
                 name="pricingStrategy"
                 value="tiered"
                 checked={formData.pricingStrategy === "tiered"}
-                onChange={(e) => setFormData(prev => ({ ...prev, pricingStrategy: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, pricingStrategy: e.target.value }))}
                 className="mt-1"
               />
               <div>
@@ -215,7 +238,7 @@ export default function Section4Pricing({
                 id="basePrice"
                 type="number"
                 value={formData.basePrice}
-                onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, basePrice: e.target.value }))}
                 placeholder="25.00"
                 step="0.01"
               />
@@ -230,7 +253,7 @@ export default function Section4Pricing({
                 id="markupPercentage"
                 type="number"
                 value={formData.markupPercentage}
-                onChange={(e) => setFormData(prev => ({ ...prev, markupPercentage: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, markupPercentage: e.target.value }))}
                 placeholder="150"
                 step="1"
               />
@@ -247,7 +270,7 @@ export default function Section4Pricing({
                 id="premiumMarkup"
                 type="number"
                 value={formData.premiumMarkup}
-                onChange={(e) => setFormData(prev => ({ ...prev, premiumMarkup: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, premiumMarkup: e.target.value }))}
                 placeholder="200"
                 step="1"
               />
@@ -261,7 +284,7 @@ export default function Section4Pricing({
                 <input
                   type="checkbox"
                   checked={formData.volumeDiscounts}
-                  onChange={(e) => setFormData(prev => ({ ...prev, volumeDiscounts: e.target.checked }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, volumeDiscounts: e.target.checked }))}
                 />
                 <span className="text-sm font-medium">Offer Volume Discounts</span>
               </label>
@@ -278,7 +301,7 @@ export default function Section4Pricing({
                 id="priceRangeMin"
                 type="number"
                 value={formData.priceRangeMin}
-                onChange={(e) => setFormData(prev => ({ ...prev, priceRangeMin: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, priceRangeMin: e.target.value }))}
                 placeholder="50"
                 step="1"
               />
@@ -287,7 +310,7 @@ export default function Section4Pricing({
                 id="priceRangeMax"
                 type="number"
                 value={formData.priceRangeMax}
-                onChange={(e) => setFormData(prev => ({ ...prev, priceRangeMax: e.target.value }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, priceRangeMax: e.target.value }))}
                 placeholder="500"
                 step="1"
               />
@@ -347,7 +370,7 @@ export default function Section4Pricing({
                   name="shippingStrategy"
                   value="free-shipping"
                   checked={formData.shippingStrategy === "free-shipping"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shippingStrategy: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, shippingStrategy: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -364,7 +387,7 @@ export default function Section4Pricing({
                   name="shippingStrategy"
                   value="calculated"
                   checked={formData.shippingStrategy === "calculated"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shippingStrategy: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, shippingStrategy: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -381,7 +404,7 @@ export default function Section4Pricing({
                   name="shippingStrategy"
                   value="flat-rate"
                   checked={formData.shippingStrategy === "flat-rate"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, shippingStrategy: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, shippingStrategy: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -399,7 +422,7 @@ export default function Section4Pricing({
               <input
                 type="checkbox"
                 checked={formData.internationalShipping}
-                onChange={(e) => setFormData(prev => ({ ...prev, internationalShipping: e.target.checked }))}
+                onChange={(e) => setFormData((prev: FormData) => ({ ...prev, internationalShipping: e.target.checked }))}
               />
               <span className="text-sm font-medium">Offer International Shipping</span>
             </label>
@@ -413,7 +436,7 @@ export default function Section4Pricing({
             <select
               id="taxHandling"
               value={formData.taxHandling}
-              onChange={(e) => setFormData(prev => ({ ...prev, taxHandling: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, taxHandling: e.target.value }))}
               className="w-full px-3 py-2 border border-border rounded-md bg-background"
             >
               <option value="">Select tax approach</option>
@@ -440,7 +463,7 @@ export default function Section4Pricing({
             <textarea
               id="specialOffers"
               value={formData.specialOffers}
-              onChange={(e) => setFormData(prev => ({ ...prev, specialOffers: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, specialOffers: e.target.value }))}
               placeholder="Describe any special offers you want to implement (e.g., first-time buyer discount, seasonal sales, bundle deals)..."
               rows={3}
               className="w-full px-3 py-2 border border-border rounded-md bg-background resize-none"
@@ -452,7 +475,7 @@ export default function Section4Pricing({
             <textarea
               id="customPricing"
               value={formData.customPricing}
-              onChange={(e) => setFormData(prev => ({ ...prev, customPricing: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, customPricing: e.target.value }))}
               placeholder="Any specific pricing requirements, custom sizing fees, or special considerations..."
               rows={3}
               className="w-full px-3 py-2 border border-border rounded-md bg-background resize-none"
