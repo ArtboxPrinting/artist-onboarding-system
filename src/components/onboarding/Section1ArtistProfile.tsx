@@ -18,6 +18,22 @@ interface Section1Props {
   artistInitials?: string
 }
 
+interface FormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  location: string
+  bio: string
+  artistStatement: string
+  website: string
+  instagram: string
+  facebook: string
+  brandColors: string
+  artStyle: string[]
+  experience: string
+}
+
 export default function Section1ArtistProfile({
   onSectionComplete,
   onSaveProgress,
@@ -26,7 +42,7 @@ export default function Section1ArtistProfile({
   updateSectionData,
   artistInitials
 }: Section1Props) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
     email: "",
@@ -48,7 +64,7 @@ export default function Section1ArtistProfile({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }))
+      setFormData((prev: FormData) => ({ ...prev, ...initialData }))
     }
   }, [initialData])
 
@@ -91,14 +107,14 @@ export default function Section1ArtistProfile({
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       [field]: value
     }))
   }
 
   const handleStyleToggle = (style: string) => {
-    setFormData(prev => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       artStyle: prev.artStyle.includes(style)
         ? prev.artStyle.filter(s => s !== style)
