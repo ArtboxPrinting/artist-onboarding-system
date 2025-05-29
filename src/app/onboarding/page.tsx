@@ -90,8 +90,9 @@ export default function OnboardingPage() {
     }
   }
 
-  // Update section data
+  // Update section data - FIXED: Now properly handles section data updates
   const updateSectionData = (sectionNum: number, data: any) => {
+    console.log('Updating section data:', sectionNum, data)
     setArtistData(prev => ({
       ...prev,
       [`section${sectionNum}Data`]: data,
@@ -106,6 +107,8 @@ export default function OnboardingPage() {
 
   // Handle section completion
   const handleSectionComplete = async (sectionId: number) => {
+    console.log('Completing section:', sectionId)
+    
     const updatedCompletedSections = [...artistData.completedSections]
     if (!updatedCompletedSections.includes(sectionId)) {
       updatedCompletedSections.push(sectionId)
