@@ -17,6 +17,16 @@ interface Section3Props {
   artistInitials?: string
 }
 
+// Add proper TypeScript interface for form data
+interface FormData {
+  printSizes: string[]
+  mediaTypes: string[]
+  framingOptions: string[]
+  customSizes: string
+  productPreferences: string
+  qualityLevel: string
+}
+
 export default function Section3ProductConfig({
   onSectionComplete,
   onSaveProgress,
@@ -25,7 +35,7 @@ export default function Section3ProductConfig({
   updateSectionData,
   artistInitials
 }: Section3Props) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     printSizes: [],
     mediaTypes: [],
     framingOptions: [],
@@ -39,7 +49,7 @@ export default function Section3ProductConfig({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }))
+      setFormData((prev: FormData) => ({ ...prev, ...initialData }))
     }
   }, [initialData])
 
@@ -82,12 +92,12 @@ export default function Section3ProductConfig({
     "Matting only", "Float mounting", "Canvas stretching"
   ]
 
-  const toggleOption = (field: string, option: string) => {
-    setFormData(prev => ({
+  const toggleOption = (field: keyof FormData, option: string) => {
+    setFormData((prev: FormData) => ({
       ...prev,
-      [field]: prev[field].includes(option)
-        ? prev[field].filter(item => item !== option)
-        : [...prev[field], option]
+      [field]: Array.isArray(prev[field]) && (prev[field] as string[]).includes(option)
+        ? (prev[field] as string[]).filter(item => item !== option)
+        : [...(prev[field] as string[]), option]
     }))
   }
 
@@ -158,7 +168,7 @@ export default function Section3ProductConfig({
             <Input
               id="customSizes"
               value={formData.customSizes}
-              onChange={(e) => setFormData(prev => ({ ...prev, customSizes: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, customSizes: e.target.value }))}
               placeholder="e.g., 30x40 inches, panoramic 12x36, or specific dimensions you need"
             />
             <p className="text-sm text-muted-foreground">
@@ -274,7 +284,7 @@ export default function Section3ProductConfig({
                   name="qualityLevel"
                   value="standard"
                   checked={formData.qualityLevel === "standard"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qualityLevel: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, qualityLevel: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -291,7 +301,7 @@ export default function Section3ProductConfig({
                   name="qualityLevel"
                   value="premium"
                   checked={formData.qualityLevel === "premium"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qualityLevel: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, qualityLevel: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -308,7 +318,7 @@ export default function Section3ProductConfig({
                   name="qualityLevel"
                   value="mixed"
                   checked={formData.qualityLevel === "mixed"}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qualityLevel: e.target.value }))}
+                  onChange={(e) => setFormData((prev: FormData) => ({ ...prev, qualityLevel: e.target.value }))}
                   className="mt-1"
                 />
                 <div>
@@ -326,7 +336,7 @@ export default function Section3ProductConfig({
             <textarea
               id="productPreferences"
               value={formData.productPreferences}
-              onChange={(e) => setFormData(prev => ({ ...prev, productPreferences: e.target.value }))}
+              onChange={(e) => setFormData((prev: FormData) => ({ ...prev, productPreferences: e.target.value }))}
               placeholder="Any specific requirements, preferred suppliers, color profiles, or special considerations for your prints..."
               rows={4}
               className="w-full px-3 py-2 border border-border rounded-md bg-background resize-none"
