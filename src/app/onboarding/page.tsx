@@ -232,13 +232,28 @@ export default function ArtistIntakePage() {
   }
 
   const updateNestedFormData = (section: string, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section as keyof typeof prev],
-        [field]: value
+    setFormData(prev => {
+      const currentValue = prev[section as keyof typeof prev]
+      
+      // Only spread if the current value is an object and not an array
+      if (currentValue && typeof currentValue === 'object' && !Array.isArray(currentValue)) {
+        return {
+          ...prev,
+          [section]: {
+            ...currentValue,
+            [field]: value
+          }
+        }
       }
-    }))
+      
+      // If not an object, create a new object
+      return {
+        ...prev,
+        [section]: {
+          [field]: value
+        }
+      }
+    })
   }
 
   const toggleArrayField = (field: string, value: string) => {
