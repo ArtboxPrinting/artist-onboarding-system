@@ -49,15 +49,15 @@ export default function AdminDashboard() {
   const [selectedArtist, setSelectedArtist] = useState<ArtistProfile | null>(null)
   const [sortBy, setSortBy] = useState<string>("lastUpdated")
 
-  // Fetch from artist_intakes table via API
+  // Fetch from artists table via working API
   const fetchArtistIntakes = async () => {
     try {
       setLoading(true)
       setError("")
       
-      console.log('Fetching artist intakes from API...')
+      console.log('Fetching artist data from working API...')
 
-      const response = await fetch('/api/artist-intake', {
+      const response = await fetch('/api/artists', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -74,71 +74,35 @@ export default function AdminDashboard() {
         throw new Error(result.error || 'API returned unsuccessful response')
       }
 
-      console.log('Found artist intakes:', result.data?.length || 0)
-      console.log('Sample intake data:', result.data?.[0])
+      console.log('Found artists:', result.data?.length || 0)
+      console.log('Sample artist data:', result.data?.[0])
 
-      // Transform the intake data
-      const transformedArtists = result.data?.map((intake: any, index: number) => {
-        const intakeData = intake.intake_data || {}
-        return {
-          id: intake.id || `intake-${index}`,
-          firstName: intakeData.fullName?.split(' ')[0] || intake.full_name?.split(' ')[0] || 'Unknown',
-          lastName: intakeData.fullName?.split(' ').slice(1).join(' ') || intake.full_name?.split(' ').slice(1).join(' ') || '',
-          studioName: intakeData.studioName || 'Studio Name Not Set',
-          email: intakeData.email || intake.email || 'email@example.com',
-          phone: intakeData.phone || '',
-          status: intake.status || 'draft',
-          completedSections: calculateCompletedSections(intakeData),
-          artworkCount: intakeData.artworkCatalog?.length || 0,
-          variantCount: intakeData.productTypes?.length || 0,
-          lastUpdated: intake.updated_at || intake.created_at || new Date().toISOString(),
-          submissionDate: intake.submitted_at || intake.created_at || new Date().toISOString(),
-          completionPercentage: calculateCompletion(intakeData),
-          rawData: intake // Keep full data for debugging
-        }
-      }) || []
+      // Use the data directly from the working /api/artists endpoint
+      const transformedArtists = result.data?.map((artist: any) => ({
+        id: artist.id,
+        firstName: artist.firstName,
+        lastName: artist.lastName,
+        studioName: artist.studioName || 'Studio Not Set',
+        email: artist.email,
+        phone: artist.phone || '',
+        status: artist.status || 'draft',
+        completedSections: artist.completedSections || [1],
+        artworkCount: artist.artworkCount || 0,
+        variantCount: artist.variantCount || 0,
+        lastUpdated: artist.lastUpdated,
+        submissionDate: artist.submissionDate,
+        completionPercentage: artist.completionPercentage || 25,
+        rawData: artist.rawData
+      })) || []
 
       setArtists(transformedArtists)
       
     } catch (err) {
-      console.error('Error fetching artist intakes:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch artist intakes')
+      console.error('Error fetching artist data:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch artist data')
     } finally {
       setLoading(false)
     }
-  }
-
-  const calculateCompletedSections = (intakeData: any) => {
-    const sections = []
-    
-    // Section 1: Basic info
-    if (intakeData.fullName && intakeData.email) sections.push(1)
-    
-    // Section 2: Artwork catalog
-    if (intakeData.artworkCatalog?.length > 0) sections.push(2)
-    
-    // Section 3: Product types
-    if (intakeData.productTypes?.length > 0) sections.push(3)
-    
-    // Section 4: Pricing
-    if (intakeData.pricingModel) sections.push(4)
-    
-    // Section 5: Shipping
-    if (intakeData.shippingModel) sections.push(5)
-    
-    // Section 6: Website Structure & Marketing
-    if (intakeData.websitePages?.length > 0 || intakeData.emailMarketing || intakeData.blogUpdates || intakeData.analyticsId || intakeData.promotionStrategy) {
-      sections.push(6)
-    }
-    
-    // Add checks for other sections as they're built
-    
-    return sections
-  }
-
-  const calculateCompletion = (intakeData: any) => {
-    const completedSections = calculateCompletedSections(intakeData)
-    return (completedSections.length / 8) * 100
   }
 
   // Fetch artists on component mount
@@ -193,7 +157,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-pulse text-lg font-medium">Loading artist intakes...</div>
+          <div className="animate-pulse text-lg font-medium">Loading artist data...</div>
         </div>
       </div>
     )
@@ -213,7 +177,7 @@ export default function AdminDashboard() {
             </p>
             {artists.length > 0 && (
               <Badge variant="default" className="mt-2 bg-green-600">
-                ✅ Connected - {artists.length} artist intakes found
+                ✅ Connected - {artists.length} artists found
               </Badge>
             )}
             {error && (
@@ -374,7 +338,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle>Artist Intake Submissions</CardTitle>
             <CardDescription>
-              {filteredArtists.length} of {artists.length} intakes shown
+              {filteredArtists.length} of {artists.length} artists shown
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -445,13 +409,13 @@ export default function AdminDashboard() {
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Intake Details: {selectedArtist.firstName} {selectedArtist.lastName}
+                Artist Details: {selectedArtist.firstName} {selectedArtist.lastName}
                 <Button variant="outline" onClick={() => setSelectedArtist(null)}>
                   Close
                 </Button>
               </CardTitle>
               <CardDescription>
-                Complete artist intake information and progress
+                Complete artist information and progress
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -474,7 +438,7 @@ export default function AdminDashboard() {
                   <div>
                     <h4 className="font-semibold mb-2">Progress Information</h4>
                     <div className="space-y-1 text-sm">
-                      <p><strong>Intake ID:</strong> {selectedArtist.id}</p>
+                      <p><strong>Artist ID:</strong> {selectedArtist.id}</p>
                       <p><strong>Last Updated:</strong> {new Date(selectedArtist.lastUpdated).toLocaleString()}</p>
                       <p><strong>Completed Sections:</strong> {selectedArtist.completedSections?.length || 0}/8</p>
                       <p><strong>Completion:</strong> {Math.round(selectedArtist.completionPercentage || 0)}%</p>
@@ -483,180 +447,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-
-                {/* Section 2: Artwork Details */}
-                {selectedArtist.rawData?.intake_data?.artworkCatalog?.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Section 2: Artwork Catalog</h4>
-                    <div className="space-y-3">
-                      {selectedArtist.rawData.intake_data.artworkCatalog.map((artwork: any, index: number) => (
-                        <div key={index} className="border rounded-lg p-4 bg-muted/30">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <p><strong>Title:</strong> {artwork.title || 'Untitled'}</p>
-                              <p><strong>Year:</strong> {artwork.yearCreated || 'Not specified'}</p>
-                              <p><strong>Medium:</strong> {artwork.medium || 'Not specified'}</p>
-                            </div>
-                            <div>
-                              <p><strong>Orientation:</strong> {artwork.orientation || 'Not specified'}</p>
-                              <p><strong>Keywords:</strong> {artwork.keywords || 'None'}</p>
-                            </div>
-                          </div>
-                          {artwork.description && (
-                            <div className="mt-2">
-                              <p><strong>Description:</strong> {artwork.description}</p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 3: Product Types */}
-                {selectedArtist.rawData?.intake_data?.productTypes?.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Section 3: Product Types & Variants</h4>
-                    <div className="space-y-2">
-                      <p><strong>Product Types:</strong> {selectedArtist.rawData.intake_data.productTypes.join(', ')}</p>
-                      <p><strong>Print Sizes:</strong> 
-                        {selectedArtist.rawData.intake_data.printSizes?.small && ` Small: ${selectedArtist.rawData.intake_data.printSizes.small}`}
-                        {selectedArtist.rawData.intake_data.printSizes?.medium && ` • Medium: ${selectedArtist.rawData.intake_data.printSizes.medium}`}
-                        {selectedArtist.rawData.intake_data.printSizes?.large && ` • Large: ${selectedArtist.rawData.intake_data.printSizes.large}`}
-                      </p>
-                      <p><strong>Print Media:</strong> {selectedArtist.rawData.intake_data.printMedia?.join(', ') || 'Not specified'}</p>
-                      <p><strong>Unit System:</strong> {selectedArtist.rawData.intake_data.unitSystem || 'Not specified'}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 4: Pricing */}
-                {selectedArtist.rawData?.intake_data?.pricingModel && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Section 4: Pricing & Markup</h4>
-                    <div className="space-y-2">
-                      <p><strong>Pricing Model:</strong> {selectedArtist.rawData.intake_data.pricingModel === 'markup' ? 'Markup Percentage' : 'Specific Prices'}</p>
-                      {selectedArtist.rawData.intake_data.pricingModel === 'markup' && (
-                        <p><strong>Markup Percentage:</strong> {selectedArtist.rawData.intake_data.markupPercentage}%</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.pricingModel === 'specific' && (
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {selectedArtist.rawData.intake_data.specificPrices?.small && (
-                            <p><strong>Small Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.small}</p>
-                          )}
-                          {selectedArtist.rawData.intake_data.specificPrices?.medium && (
-                            <p><strong>Medium Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.medium}</p>
-                          )}
-                          {selectedArtist.rawData.intake_data.specificPrices?.large && (
-                            <p><strong>Large Print:</strong> ${selectedArtist.rawData.intake_data.specificPrices.large}</p>
-                          )}
-                          {selectedArtist.rawData.intake_data.specificPrices?.framed && (
-                            <p><strong>Framed Premium:</strong> +${selectedArtist.rawData.intake_data.specificPrices.framed}</p>
-                          )}
-                        </div>
-                      )}
-                      {selectedArtist.rawData.intake_data.limitedEditions && (
-                        <p><strong>Limited Editions:</strong> ✅ Yes</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.signedPrints && (
-                        <p><strong>Signed Prints:</strong> ✅ Yes (+${selectedArtist.rawData.intake_data.signedPrintPremium || '0'})</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.wholesalePricing && (
-                        <p><strong>Wholesale Pricing:</strong> ✅ Yes ({selectedArtist.rawData.intake_data.wholesaleDiscount}% discount)</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 5: Shipping & Packaging */}
-                {selectedArtist.rawData?.intake_data?.shippingModel && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Section 5: Shipping & Packaging</h4>
-                    <div className="space-y-2">
-                      <p><strong>Shipping Model:</strong> 
-                        {selectedArtist.rawData.intake_data.shippingModel === 'free' && 'Free Shipping'}
-                        {selectedArtist.rawData.intake_data.shippingModel === 'flat' && 'Flat Rate Shipping'}
-                        {selectedArtist.rawData.intake_data.shippingModel === 'calculated' && 'Real-time Calculated'}
-                      </p>
-                      {selectedArtist.rawData.intake_data.locationsServed?.length > 0 && (
-                        <p><strong>Locations Served:</strong> {selectedArtist.rawData.intake_data.locationsServed.join(', ')}</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.standardTurnaround && (
-                        <p><strong>Standard Turnaround:</strong> {selectedArtist.rawData.intake_data.standardTurnaround}</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.expressOptions && (
-                        <p><strong>Express Options:</strong> {selectedArtist.rawData.intake_data.expressOptions}</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.expressUpcharge && (
-                        <p><strong>Express Upcharge:</strong> +${selectedArtist.rawData.intake_data.expressUpcharge}</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.signatureRequired && (
-                        <p><strong>Signature Required:</strong> ✅ Yes</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.packagingPreferences?.length > 0 && (
-                        <p><strong>Packaging:</strong> {selectedArtist.rawData.intake_data.packagingPreferences.join(', ')}</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.brandedInserts && (
-                        <p><strong>Branded Inserts:</strong> ✅ Yes</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.certificateAuthenticity && (
-                        <p><strong>Certificate of Authenticity:</strong> ✅ Yes</p>
-                      )}
-                      {selectedArtist.rawData.intake_data.giftPackaging && (
-                        <p><strong>Gift Packaging:</strong> ✅ Available</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 6: Website Structure & Marketing */}
-                {(selectedArtist.rawData?.intake_data?.websitePages?.length > 0 || 
-                  selectedArtist.rawData?.intake_data?.emailMarketing || 
-                  selectedArtist.rawData?.intake_data?.blogUpdates || 
-                  selectedArtist.rawData?.intake_data?.analyticsId || 
-                  selectedArtist.rawData?.intake_data?.promotionStrategy) && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Section 6: Website Structure & Marketing</h4>
-                    <div className="space-y-2">
-                      {selectedArtist.rawData.intake_data.websitePages?.length > 0 && (
-                        <p><strong>Website Pages:</strong> {selectedArtist.rawData.intake_data.websitePages.join(', ')}</p>
-                      )}
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p><strong>Email Marketing:</strong> {selectedArtist.rawData.intake_data.emailMarketing ? '✅ Enabled' : '❌ Disabled'}</p>
-                          <p><strong>Blog/Journal:</strong> {selectedArtist.rawData.intake_data.blogUpdates ? '✅ Enabled' : '❌ Disabled'}</p>
-                        </div>
-                        <div>
-                          {selectedArtist.rawData.intake_data.analyticsId && (
-                            <p><strong>Analytics ID:</strong> {selectedArtist.rawData.intake_data.analyticsId}</p>
-                          )}
-                        </div>
-                      </div>
-                      {selectedArtist.rawData.intake_data.promotionStrategy && (
-                        <div className="mt-2">
-                          <p><strong>Promotion Strategy:</strong></p>
-                          <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                            {selectedArtist.rawData.intake_data.promotionStrategy}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* File Preparation Info */}
-                {selectedArtist.rawData?.intake_data?.filePreparation && (
-                  <div>
-                    <h4 className="font-semibold mb-2">File Preparation</h4>
-                    <div className="text-sm space-y-1">
-                      <p><strong>File Status:</strong> {selectedArtist.rawData.intake_data.filePreparation}</p>
-                      <p><strong>Upload Method:</strong> {selectedArtist.rawData.intake_data.uploadMethod || 'Not specified'}</p>
-                      {selectedArtist.rawData.intake_data.assistanceNeeded?.length > 0 && (
-                        <p><strong>Assistance Needed:</strong> {selectedArtist.rawData.intake_data.assistanceNeeded.join(', ')}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
                 
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <details>
