@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Supabase server client (auto-configured)
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Save onboarding progress to database
     const { data, error } = await supabase
