@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     console.log('Artist application submission received:', formData)
 
     // Initialize Supabase server client
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Generate unique artist ID
     const artistId = `artist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
