@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Supabase server client (auto-configured)
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Prepare artist data from onboarding sections
     const section1 = sectionData[1] || {}
