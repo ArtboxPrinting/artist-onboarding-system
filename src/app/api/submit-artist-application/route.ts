@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
       design_elements: formData.designElements,
       website_references: formData.websiteReferences,
       
-      // Completion status
-      onboarding_completed: true,
+      // Completion status - TEMPORARILY REMOVED ONBOARDING_COMPLETED FIELD
+      // onboarding_completed: true,  // Will add back once Supabase schema cache refreshes
       submitted_at: new Date().toISOString(),
       status: 'submitted'
     }
