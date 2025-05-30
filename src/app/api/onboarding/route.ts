@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +13,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Supabase configuration missing'
-      })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Initialize Supabase server client (auto-configured)
+    const supabase = createClient()
 
     // Save onboarding progress to database
     const { data, error } = await supabase
