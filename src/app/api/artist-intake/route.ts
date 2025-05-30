@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
+  try {\n    const body = await request.json()
     
     // Initialize Supabase server client (auto-configured)
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Save artist intake data
     const { data, error } = await supabase
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Initialize Supabase server client (auto-configured)
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('artist_intakes')
