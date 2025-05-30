@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Supabase configuration missing'
-      }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Initialize Supabase server client (auto-configured)
+    const supabase = createClient()
 
     // Save artist intake data
     const { data, error } = await supabase
@@ -61,17 +51,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Supabase configuration missing'
-      }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Initialize Supabase server client (auto-configured)
+    const supabase = createClient()
 
     const { data, error } = await supabase
       .from('artist_intakes')
@@ -87,7 +68,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      data: data || []
+      data: data || [],
+      debug: {
+        dataSource: "SERVER_CLIENT_FIXED",
+        intakesFound: data?.length || 0,
+        message: "Fixed to use server client instead of browser client"
+      }
     })
 
   } catch (error) {
